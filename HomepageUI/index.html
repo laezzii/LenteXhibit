@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LenteXhibit - UP Lente Portfolio</title>
+    <link rel="stylesheet" href="homepage-styles.css">
+</head>
+<body>
+    <!-- Top Header Bar -->
+    <header class="top-header">
+        <div class="navbar-brand" onclick="loadHomepage()">LenteXhibit</div>
+        <div class="navbar-right">
+            <input type="text" class="search-bar" id="searchBar" placeholder="Search works or members...">
+            
+            <!-- Not Logged In -->
+            <div id="authButtons">
+                <button class="auth-button" onclick="showAuthModal()">Sign Up / Log In</button>
+            </div>
+
+            <!-- Logged In -->
+            <div id="userDropdown" class="user-dropdown hidden">
+                <button class="user-button" onclick="toggleDropdown()">
+                    <span id="userName">User</span> ▼
+                </button>
+                <div class="dropdown-menu" id="dropdownMenu">
+                    <div class="dropdown-item" onclick="viewMyPortfolio()">My Portfolio</div>
+                    <div class="dropdown-item" onclick="showSection('themes')">Themes</div>
+                    <div class="dropdown-item" onclick="showAbout()">About</div>
+                    <div class="dropdown-item" onclick="logout()">Log Out</div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="navbar-center">
+            <a class="nav-link" onclick="showSection('featured')">Featured Works</a>
+            <a class="nav-link" onclick="showSection('themes')">Themes</a>
+            <a class="nav-link" onclick="showSection('photos')">Photos</a>
+            <a class="nav-link" onclick="showSection('graphics')">Graphics</a>
+            <a class="nav-link" onclick="showSection('videos')">Videos</a>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container">
+        <!-- Featured Works Section -->
+        <section class="featured-works">
+            <div class="section-header">
+                <h2>✨ Featured Works</h2>
+                <a class="view-all" onclick="showSection('featured')">View All</a>
+            </div>
+            <div class="featured-grid" id="featuredGrid">
+                <div class="loading">Loading featured works...</div>
+            </div>
+        </section>
+
+        <!-- Category Tabs -->
+        <div class="category-tabs">
+            <div class="tab active" data-category="All" onclick="filterByCategory('All')">All Works</div>
+            <div class="tab" data-category="Photos" onclick="filterByCategory('Photos')">📷 Photos</div>
+            <div class="tab" data-category="Graphics" onclick="filterByCategory('Graphics')">🎨 Graphics</div>
+            <div class="tab" data-category="Videos" onclick="filterByCategory('Videos')">🎬 Videos</div>
+        </div>
+
+        <!-- Works Grid -->
+        <div class="featured-grid" id="worksGrid">
+            <div class="loading">Loading works...</div>
+        </div>
+
+        <!-- Ranking Section -->
+        <section class="ranking-section" style="margin-top: 40px;">
+            <div class="section-header">
+                <h2>🏆 Top Ranked Works</h2>
+                <select id="rankingCategory" onchange="loadRankings(this.value)" style="padding: 8px; border-radius: 5px; border: 2px solid #e0e0e0;">
+                    <option value="All">All Categories</option>
+                    <option value="Photos">Photos</option>
+                    <option value="Graphics">Graphics</option>
+                    <option value="Videos">Videos</option>
+                </select>
+            </div>
+            <div class="ranking-list" id="rankingList">
+                <div class="loading">Loading rankings...</div>
+            </div>
+        </section>
+    </div>
+
+    <script src="homepage.js"></script>
+</body>
+</html>
