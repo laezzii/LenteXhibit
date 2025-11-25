@@ -1,9 +1,25 @@
+/**
+ * Homepage UI script
+ * Contains functions to load works, handle authentication state,
+ * manage UI interactions (search, filters, dropdowns).
+ */
+
 // API Configuration
+/** Base URL for backend API calls. Update if backend URL changes. */
 const API_BASE_URL = 'http://localhost:5000/api';
+
+/** Currently authenticated user object (null when not authenticated). */
 let currentUser = null;
+
+/** Currently selected category for filtering works. 'All' means no filter. */
 let currentCategory = 'All';
 
 // Check authentication on page load
+/**
+ * Entry point executed when the page finishes loading.
+ * - Verifies authentication
+ * - Loads featured works, works list, rankings and initializes search
+ */
 window.onload = async function() {
     await checkAuth();
     loadFeaturedWorks();
@@ -12,7 +28,11 @@ window.onload = async function() {
     setupSearch();
 };
 
-// Check if user is authenticated
+/**
+ * Verifies whether the user is authenticated by calling the backend
+ * endpoint `/auth/verify`. On success, sets `currentUser` and updates UI.
+ * Uses `credentials: 'include'` to send cookies/session information.
+ */
 async function checkAuth() {
     try {
         const response = await fetch(`${API_BASE_URL}/auth/verify`, {
@@ -25,23 +45,35 @@ async function checkAuth() {
             updateUIForLoggedInUser();
         }
     } catch (error) {
+        // Unauthenticated users continue in guest mode
         console.log('Not authenticated');
     }
 }
 
-// Update UI for logged in user
+/**
+ * Updates parts of the UI to reflect a logged-in user.
+ * - Hides auth buttons
+ * - Shows user dropdown
+ * - Fills displayed username
+ */
 function updateUIForLoggedInUser() {
     document.getElementById('authButtons').classList.add('hidden');
     document.getElementById('userDropdown').classList.remove('hidden');
     document.getElementById('userName').textContent = currentUser.name;
 }
 
-// Show/Hide dropdown
+/**
+ * Toggles the visibility of the user dropdown menu.
+ * Bound to the user button's onclick handler in the markup.
+ */
 function toggleDropdown() {
     document.getElementById('dropdownMenu').classList.toggle('show');
 }
 
-// Close dropdown when clicking outside
+/**
+ * Global click handler to close the user dropdown when clicking outside it.
+ * Keeps UX tidy by ensuring the dropdown doesn't remain open unintentionally.
+ */
 window.onclick = function(event) {
     if (!event.target.matches('.user-button')) {
         const dropdown = document.getElementById('dropdownMenu');
@@ -51,13 +83,20 @@ window.onclick = function(event) {
     }
 };
 
-// Show auth modal - Redirect to login page
+/**
+ * Redirects the user to the login page. Kept as a named function to
+ * make it easy to call from multiple UI elements (login button, links, etc.).
+ */
 function showAuthModal() {
     // Redirect to login page 
     window.location.href = 'login.html';
 }
 
-// Login user
+/**
+ * Sends login request to backend with `email` and `name`.
+ * On success, sets `currentUser`, updates UI and reloads the page.
+ * Uses cookies/session via `credentials: 'include'`.
+ */
 async function loginUser(email, name) {
     try {
         const response = await fetch(`${API_BASE_URL}/auth/login`, {
@@ -81,7 +120,10 @@ async function loginUser(email, name) {
     }
 }
 
-// Logout
+/**
+ * Logs out the current user after a confirmation prompt.
+ * Calls backend `/auth/logout` to clear server session/cookie.
+ */
 async function logout() {
     if (!confirm('Are you sure you want to log out?')) return;
 
@@ -101,7 +143,10 @@ async function logout() {
     }
 }
 
-// Load featured works
+/**
+ * Loads featured works (limited to 3) and renders them into `#featuredGrid`.
+ * Falls back to an empty state message when none are returned.
+ */
 async function loadFeaturedWorks() {
     try {
         const response = await fetch(`${API_BASE_URL}/works?featured=true&limit=3`);
@@ -118,7 +163,10 @@ async function loadFeaturedWorks() {
     }
 }
 
-// Load works
+/**
+ * Loads a paginated list of works (limit 12) with optional category filter
+ * and renders them into `#worksGrid`.
+ */
 async function loadWorks() {
     try {
         const categoryParam = currentCategory !== 'All' ? `&category=${currentCategory}` : '';
@@ -136,7 +184,10 @@ async function loadWorks() {
     }
 }
 
-// Create work card HTML
+/**
+ * Returns HTML for a single work card. This is a simple template helper
+ * that keeps presentation logic in one place. The `onclick` uses `viewWork`.
+ */
 function createWorkCard(work) {
     const icon = work.category === 'Photos' ? '📷' : work.category === 'Graphics' ? '🎨' : '🎬';
     return `
@@ -154,7 +205,9 @@ function createWorkCard(work) {
     `;
 }
 
-// Filter by category
+/**
+ * Applies a category filter for displayed works and updates active tab.
+ */
 function filterByCategory(category) {
     currentCategory = category;
     
@@ -169,7 +222,10 @@ function filterByCategory(category) {
     loadWorks();
 }
 
-// Load rankings
+/**
+ * Loads ranking data for a given category and populates `#rankingList`.
+ * Renders top 10 works with special medal icons for top 3.
+ */
 async function loadRankings(category) {
     try {
         const response = await fetch(`${API_BASE_URL}/works/rankings/${category}`);
@@ -200,14 +256,19 @@ async function loadRankings(category) {
     }
 }
 
-// View work details
+/**
+ * Handler invoked when a work card is clicked. Currently shows a placeholder
+ * alert. Replace with navigation to a dedicated work detail page when ready.
+ */
 function viewWork(workId) {
     alert(`View work: ${workId}\n\nThis would open the work detail page.`);
     // TODO: Navigate to work detail page
     // window.location.href = `work.html?id=${workId}`;
 }
 
-// View my portfolio
+/**
+ * Opens the current user's portfolio. If no user is logged in this is a no-op.
+ */
 function viewMyPortfolio() {
     if (currentUser) {
         alert(`View portfolio for: ${currentUser.name}\n\nThis would open your portfolio page.`);
@@ -216,25 +277,35 @@ function viewMyPortfolio() {
     }
 }
 
-// Show section
+/**
+ * Generic navigation stub for showing different site sections.
+ * Replace alerts with real navigation when pages are implemented.
+ */
 function showSection(section) {
     alert(`Navigate to: ${section}\n\nThis would show the ${section} page.`);
     // TODO: Implement section navigation
 }
 
-// Show about
+/**
+ * Shows information about the organization. Currently a placeholder.
+ */
 function showAbout() {
     alert('About UP Lente\n\nThis would show information about UP Lente organization.');
     // TODO: Implement about page
     // window.location.href = 'about.html';
 }
 
-// Load homepage
+/**
+ * Reloads the homepage. Kept as a named function for clarity and testability.
+ */
 function loadHomepage() {
     location.reload();
 }
 
-// Setup search
+/**
+ * Attaches debounced input handling to the search bar. Waits 500ms
+ * after the last keystroke before issuing a search to reduce API load.
+ */
 function setupSearch() {
     const searchBar = document.getElementById('searchBar');
     let searchTimeout;
@@ -252,7 +323,10 @@ function setupSearch() {
     });
 }
 
-// Search works
+/**
+ * Searches works using the backend API and renders results into `#worksGrid`.
+ * Uses `encodeURIComponent` to safely include the query in the URL.    
+ */
 async function searchWorks(query) {
     try {
         const response = await fetch(`${API_BASE_URL}/works?search=${encodeURIComponent(query)}`);
