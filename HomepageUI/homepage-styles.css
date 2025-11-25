@@ -286,6 +286,15 @@ body {
     color: #e74c3c;
 }
 
+/* Voting Theme Section */
+.voting-theme-section {
+    background: white;
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    margin-bottom: 40px;
+}
+
 /* Ranking Section */
 .ranking-section {
     background: white;

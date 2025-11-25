@@ -41,7 +41,8 @@
     <!-- Navigation links to different sections of the site -->
     <nav class="navbar">
         <div class="navbar-center">
-            <a class="nav-link" onclick="showSection('featured')">Featured Works</a>
+            <a class="nav-link" onclick="showSection('about')">About</a>
+            <a class="nav-link" onclick="showSection('portfolios')">Portfolios </a>
             <a class="nav-link" onclick="showSection('themes')">Themes</a>
             <a class="nav-link" onclick="showSection('photos')">Photos</a>
             <a class="nav-link" onclick="showSection('graphics')">Graphics</a>
@@ -63,21 +64,19 @@
                 <div class="loading">Loading featured works...</div>
             </div>
         </section>
-
-        <!-- Category Tabs -->
-        <!--Allows users to filter works by category -->
-        <div class="category-tabs">
-            <div class="tab active" data-category="All" onclick="filterByCategory('All')">All Works</div>
-            <div class="tab" data-category="Photos" onclick="filterByCategory('Photos')">📷 Photos</div>
-            <div class="tab" data-category="Graphics" onclick="filterByCategory('Graphics')">🎨 Graphics</div>
-            <div class="tab" data-category="Videos" onclick="filterByCategory('Videos')">🎬 Videos</div>
-        </div>
-
-        <!-- Works Grid -->
-        <!-- Displays a grid of works based on the selected category or search -->
-        <div class="featured-grid" id="worksGrid">
-            <div class="loading">Loading works...</div>
-        </div>
+        
+        <!-- Voting Theme Section -->
+        <section class ="voting-theme-section" style="margin-top: 40px;">
+            <div class="section-header">
+                <h2>🗳️ Current Voting Theme</h2>
+            </div>
+            <div class="theme-card" id="currentThemeCard">
+                <div class="titletheme">Title: </div>
+                <div class="descriptiontheme">Description: </div>
+                <div class="categorytheme">Category: </div>  
+                <div class="datetheme">Voting Ends On: </div>
+            </div>
+        </section>
 
         <!-- Ranking Section -->
         <!-- Displays top ranked works with a category filter -->

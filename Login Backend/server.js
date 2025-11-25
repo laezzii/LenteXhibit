@@ -5,7 +5,7 @@ const session = require('express-session');
 const MongoStore = require('connect-mongo');
 const cors = require('cors');
 const path = require('path');
-require('dotenv').config();
+require('dotenv').config(); 
 
 const app = express();
 
@@ -14,6 +14,7 @@ const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
 const workRoutes = require('./routes/works');
 const portfolioRoutes = require('./routes/portfolios');
+const themesRoutes = require('./routes/themes');
 
 // Middleware
 app.use(cors({

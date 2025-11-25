@@ -54,7 +54,7 @@ window.onclick = function(event) {
 // Show auth modal - Redirect to login page
 function showAuthModal() {
     // Redirect to login page 
-    window.location.href = 'index.html';
+    window.location.href = 'login.html';
 }
 
 // Login user
@@ -204,6 +204,7 @@ async function loadRankings(category) {
 function viewWork(workId) {
     alert(`View work: ${workId}\n\nThis would open the work detail page.`);
     // TODO: Navigate to work detail page
+    // window.location.href = `work.html?id=${workId}`;
 }
 
 // View my portfolio
@@ -211,6 +212,7 @@ function viewMyPortfolio() {
     if (currentUser) {
         alert(`View portfolio for: ${currentUser.name}\n\nThis would open your portfolio page.`);
         // TODO: Navigate to portfolio page
+        // window.location.href = `portfolio.html?userId=${currentUser._id}`;
     }
 }
 
@@ -224,6 +226,7 @@ function showSection(section) {
 function showAbout() {
     alert('About UP Lente\n\nThis would show information about UP Lente organization.');
     // TODO: Implement about page
+    // window.location.href = 'about.html';
 }
 
 // Load homepage
