@@ -8,21 +8,25 @@
 </head>
 <body>
     <!-- Top Header Bar -->
+    <!-- LenteXhibit branding, search bar, and login/sign up buttons positioned at the top page-->
     <header class="top-header">
+        <!-- LenteXhibit Logo when clicked reloads homepage-->
         <div class="navbar-brand" onclick="loadHomepage()">LenteXhibit</div>
         <div class="navbar-right">
+            <!--Search Bar - Allows users to search for works or members-->
             <input type="text" class="search-bar" id="searchBar" placeholder="Search works or members...">
             
-            <!-- Not Logged In -->
+            <!-- Authentication Buttons - Sign Up / Log In -->
             <div id="authButtons">
                 <button class="auth-button" onclick="showAuthModal()">Sign Up / Log In</button>
             </div>
 
-            <!-- Logged In -->
+            <!-- User Dropdown Menu - Visible when logged in -->
             <div id="userDropdown" class="user-dropdown hidden">
                 <button class="user-button" onclick="toggleDropdown()">
                     <span id="userName">User</span> ▼
                 </button>
+                <!--Dropdown menu with user actions-->
                 <div class="dropdown-menu" id="dropdownMenu">
                     <div class="dropdown-item" onclick="viewMyPortfolio()">My Portfolio</div>
                     <div class="dropdown-item" onclick="showSection('themes')">Themes</div>
@@ -34,6 +38,7 @@
     </header>
 
     <!-- Navigation Bar -->
+    <!-- Navigation links to different sections of the site -->
     <nav class="navbar">
         <div class="navbar-center">
             <a class="nav-link" onclick="showSection('featured')">Featured Works</a>
@@ -45,8 +50,10 @@
     </nav>
 
     <!-- Main Content -->
+    <!-- Contains page content: featured works, category filters, works grid, and rankings-->
     <div class="container">
         <!-- Featured Works Section -->
+        <!-- Displays works that have been featured by the admin-->
         <section class="featured-works">
             <div class="section-header">
                 <h2>✨ Featured Works</h2>
@@ -58,6 +65,7 @@
         </section>
 
         <!-- Category Tabs -->
+        <!--Allows users to filter works by category -->
         <div class="category-tabs">
             <div class="tab active" data-category="All" onclick="filterByCategory('All')">All Works</div>
             <div class="tab" data-category="Photos" onclick="filterByCategory('Photos')">📷 Photos</div>
@@ -66,14 +74,17 @@
         </div>
 
         <!-- Works Grid -->
+        <!-- Displays a grid of works based on the selected category or search -->
         <div class="featured-grid" id="worksGrid">
             <div class="loading">Loading works...</div>
         </div>
 
         <!-- Ranking Section -->
+        <!-- Displays top ranked works with a category filter -->
         <section class="ranking-section" style="margin-top: 40px;">
             <div class="section-header">
                 <h2>🏆 Top Ranked Works</h2>
+                <!-- Category filter for rankings -->
                 <select id="rankingCategory" onchange="loadRankings(this.value)" style="padding: 8px; border-radius: 5px; border: 2px solid #e0e0e0;">
                     <option value="All">All Categories</option>
                     <option value="Photos">Photos</option>

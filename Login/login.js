@@ -15,6 +15,7 @@ let userData = {};
 loginForm.addEventListener('submit', async function(e) {
     e.preventDefault();
     
+    // Collect basic user info
     const name = document.getElementById('name').value;
     const email = document.getElementById('email').value;
     const userType = document.querySelector('input[name="userType"]:checked').value;

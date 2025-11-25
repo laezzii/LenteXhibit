@@ -1,9 +1,14 @@
+/* Main stylesheet for the LenteXhibit homepage */
+/* Styles for header, navigation, featured works, rankings, and modals */
+
+/* Reset browser default margins and paddings */
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
 
+/* Base body styles */
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background: #f5f5f5;
@@ -24,12 +29,14 @@ body {
     z-index: 1000;
 }
 
+/* LenteXhibit Logo */
 .navbar-brand {
     font-size: 24px;
     font-weight: bold;
     cursor: pointer;
 }
 
+/* Right side of header (search and auth buttons) */
 .navbar-right {
     display: flex;
     gap: 15px;
@@ -49,12 +56,14 @@ body {
     z-index: 999;
 }
 
+/* Navigation links container */
 .navbar-center {
     display: flex;
     gap: 30px;
     align-items: center;
 }
 
+/* Individual navigation link styles */
 .nav-link {
     color: #333;
     text-decoration: none;
@@ -71,6 +80,7 @@ body {
     background: #f5f5f5;
 }
 
+/* Search bar input styling */
 .search-bar {
     padding: 8px 15px;
     border-radius: 20px;
@@ -78,6 +88,7 @@ body {
     width: 250px;
 }
 
+/* Authentication Buttons */
 .auth-button {
     padding: 8px 20px;
     border-radius: 20px;
@@ -135,14 +146,14 @@ body {
     background: #f5f5f5;
 }
 
-/* Main Content */
+/* Main Content - centers content with max width */
 .container {
     max-width: 1200px;
     margin: 0 auto;
     padding: 40px 20px;
 }
 
-/* Category Tabs */
+/* Category Filter Tabs */
 .category-tabs {
     display: flex;
     gap: 20px;
@@ -151,6 +162,7 @@ body {
     padding-bottom: 10px;
 }
 
+/* Individual category tab styles */
 .tab {
     padding: 10px 20px;
     cursor: pointer;
@@ -165,7 +177,7 @@ body {
     border-bottom-color: #667eea;
 }
 
-/* Section Headers */
+/* Section Headers (title + view all link) */
 .section-header {
     display: flex;
     justify-content: space-between;
@@ -173,6 +185,7 @@ body {
     margin-bottom: 20px;
 }
 
+/* Section title */
 .section-header h2 {
     font-size: 24px;
     color: #333;
@@ -194,6 +207,7 @@ body {
     margin-bottom: 40px;
 }
 
+/* Responsive Grid for displaying works */
 .featured-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -215,6 +229,7 @@ body {
     box-shadow: 0 5px 20px rgba(0,0,0,0.15);
 }
 
+/* Work image */
 .work-image {
     width: 100%;
     height: 200px;
@@ -227,10 +242,12 @@ body {
     font-size: 48px;
 }
 
+/* Work information container */
 .work-info {
     padding: 15px;
 }
 
+/* Work title */
 .work-title {
     font-size: 16px;
     font-weight: 600;
@@ -238,6 +255,7 @@ body {
     margin-bottom: 5px;
 }
 
+/* Work author */
 .work-author {
     font-size: 14px;
     color: #666;
@@ -277,6 +295,7 @@ body {
     margin-bottom: 40px;
 }
 
+/* Rankings list container */
 .ranking-list {
     display: flex;
     flex-direction: column;
