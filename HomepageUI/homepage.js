@@ -88,8 +88,97 @@ window.onclick = function(event) {
  * make it easy to call from multiple UI elements (login button, links, etc.).
  */
 function showAuthModal() {
-    // Redirect to login page 
-    window.location.href = 'login.html';
+    // Show the authentication modal
+    document.getElementById('authModal').classList.add('show');
+}
+
+// Close auth modal when clicking the close button
+function closeAuthModal() {
+    document.getElementById('authModal').classList.remove('show');
+    document.getElementById('step1Form').classList.remove('hidden');
+    document.getElementById('step2Form').classList.add('hidden');
+}
+
+// Handle Step 1 form submission
+document.getElementById('step1Form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const name = document.getElementById('authName').value;
+    const email = document.getElementById('authEmail').value;
+    const userType = document.querySelector('input[name="userType"]:checked').value;
+
+    // Validate email for members - must be UP mail that ends with @up.edu.ph
+    if (userType === 'member' && !email.endsWith('@up.edu.ph')) {
+        alert('Lente members must use their UP email address.');
+        return;
+    }
+
+    // Store data temporarily
+    window.tempUserData = { name, email, userType };
+
+    if (userType === 'member') {
+        // Show member details form
+        document.getElementById('step1Form').classList.add('hidden');
+        document.getElementById('step2Form').classList.remove('hidden');
+        document.getElementById('modalTitle').textContent = 'Member Details';
+    } else {
+        // Register guest user directly
+        await registerUser({name, email, userType});
+    }
+});
+
+// Handle Step 2 form submission for members
+document.getElementById('step2Form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const batchName = document.getElementById('batchName').value;
+    const cluster = document.getElementById('cluster').value;
+    const position = document.getElementById('position').value;
+
+    const userData = {
+        ...window.tempUserData,
+        batchName,
+        cluster,
+        position
+    };
+
+    await registerUser(userData);
+});
+
+// Back to Step 1
+function backToStep1() {
+    document.getElementById('step2Form').classList.add('hidden');
+    document.getElementById('step1Form').classList.remove('hidden');
+    document.getElementById('modalTitle').textContent = 'Sign Up / Log In';
+}
+
+// Register User
+async function registerUser(userData) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/users/register`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify(userData)
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            alert(data.message);
+            
+            if (userData.userType === 'guest') {
+                // Auto-login for guests
+                await loginUser(userData.email, userData.name);
+            }
+            
+            closeAuthModal();
+        } else {
+            alert(data.message || 'Registration failed');
+        }
+    } catch (error) {
+        console.error('Registration error:', error);
+        alert('Error during registration. Please try again.');
+    }
 }
 
 /**
@@ -282,17 +371,18 @@ function viewMyPortfolio() {
  * Replace alerts with real navigation when pages are implemented.
  */
 function showSection(section) {
-    alert(`Navigate to: ${section}\n\nThis would show the ${section} page.`);
-    // TODO: Implement section navigation
+    if (section === 'about') {
+        window.location.href = 'about.html';
+    } else {
+        alert(`Navigate to: ${section}\n\nThis would show the ${section} page.`);
+    }
 }
 
 /**
  * Shows information about the organization. Currently a placeholder.
  */
 function showAbout() {
-    alert('About UP Lente\n\nThis would show information about UP Lente organization.');
-    // TODO: Implement about page
-    // window.location.href = 'about.html';
+    window.location.href = 'about.html';
 }
 
 /**

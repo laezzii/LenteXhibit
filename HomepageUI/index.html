@@ -97,6 +97,75 @@
         </section>
     </div>
 
-    <script src="homepage.js"></script>
+    <!-- Auth Modal (Sign Up/ Log In) -->
+    <div class="modal" id="authModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Sign Up / Log In</h2>
+                <button class="close-button" onclick="closeAuthModal()">&times;</button>
+            </div>
+
+            <!-- Step 1: Initial Form -->
+            <form id="step1Form">
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" id="authName" required>
+                </div>
+                <div class="form-group">
+                    <label>Email Address</label>
+                    <input type="email" id="authEmail" required>
+                </div>
+                <div class="form-group">
+                    <label>Account Type</label>
+                    <div class="radio-group">
+                        <div class="radio-option">
+                            <input type="radio" id="guestRadio" name="userType" value="guest" required>
+                            <label for="guestRadio" class="radio-label">Guest</label>
+                        </div>
+                        <div class="radio-option">
+                            <input type="radio" id="memberRadio" name="userType" value="member" required>
+                            <label for="memberRadio" class="radio-label">Member</label>
+                        </div>
+                    </div>
+                </div>
+                <button type="submit" class="submit-btn">Continue</button>
+            </form>
+
+            <!-- Step 2: Member Details Form -->
+            <form id="step2Form" class="hidden">
+                <div class="form-group">
+                    <label>Batch Name</label>
+                    <input type="text" id="batchName" placeholder="e.g., Batch Burger" required>
+                </div>
+                <div class="form-group">
+                    <label>Cluster</label>
+                    <input type="text" id="cluster" placeholder="Enter your cluster" required>
+                </div>
+                <div class="form-group">
+                    <label>Organization Position</label>
+                    <select id="position" required>
+                        <option value="">Select your position</option>
+                        <option value="President">President</option>
+                        <option value="Vice President">Vice President</option>
+                        <option value="Secretary">Secretary</option>
+                        <option value="Treasurer">Treasurer</option>
+                        <option value="Auditor">Auditor</option>
+                        <option value="Public Relations Officer">Public Relations Officer</option>
+                        <option value="Photography Cluster Head">Photography Cluster Head</option>
+                        <option value="Photography Cluster Co-Head">Photography Cluster Co-Head</option>
+                        <option value="Graphics Cluster Head">Graphics Cluster Head</option>
+                        <option value="Graphics Cluster Co-Head">Graphics Cluster Co-Head</option>
+                        <option value="Videography Cluster Head">Videography Cluster Head</option>
+                        <option value="Videography Cluster Co-Head">Videography Cluster Co-Head</option>
+                        <option value="Member">Member</option>
+                    </select>
+                </div>
+                <button type="submit" class="submit-btn">Submit</button>
+                <button type="button" class="submit-btn" style="margin-top: 10px; background: #6c757d;" onclick="backToStep1()">Back</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="homepage.js"></script
 </body>
 </html>
