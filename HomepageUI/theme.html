@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Themes - LenteXhibit</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+            min-height: 100vh;
+        }
+
+        /* Top Header Bar */
+        .top-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .navbar-brand {
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .navbar-right {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .search-bar {
+            padding: 8px 15px;
+            border-radius: 20px;
+            border: none;
+            width: 250px;
+        }
+
+        .auth-button {
+            padding: 8px 20px;
+            border-radius: 20px;
+            border: 2px solid white;
+            background: transparent;
+            color: white;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .auth-button:hover {
+            background: white;
+            color: #667eea;
+        }
+
+        .user-dropdown {
+            position: relative;
+        }
+
+        .user-button {
+            background: white;
+            color: #667eea;
+            padding: 8px 20px;
+            border-radius: 20px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .dropdown-menu {
+            display: none;
+            position: absolute;
+            top: 40px;
+            right: 0;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+            min-width: 200px;
+            overflow: hidden;
+        }
+
+        .dropdown-menu.show {
+            display: block;
+        }
+
+        .dropdown-item {
+            padding: 12px 20px;
+            cursor: pointer;
+            color: #333;
+            transition: background 0.3s;
+        }
+
+        .dropdown-item:hover {
+            background: #f5f5f5;
+        }
+
+        /* Navigation Bar */
+        .navbar {
+            background: white;
+            padding: 15px 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            position: sticky;
+            top: 54px;
+            z-index: 999;
+        }
+
+        .navbar-center {
+            display: flex;
+            gap: 30px;
+            align-items: center;
+        }
+
+        .nav-link {
+            color: #333;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: color 0.3s;
+            padding: 8px 15px;
+            border-radius: 5px;
+        }
+
+        .nav-link:hover {
+            color: #667eea;
+            background: #f5f5f5;
+        }
+
+        .nav-link.active {
+            color: #667eea;
+        }
+
+        /* Container */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        /* Page Header */
+        .page-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .page-header h1 {
+            font-size: 36px;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .page-header p {
+            font-size: 18px;
+            color: #666;
+        }
+
+        /* Active Theme Banner */
+        .active-theme-banner {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            border-radius: 20px;
+            margin-bottom: 40px;
+            box-shadow: 0 5px 30px rgba(102, 126, 234, 0.3);
+        }
+
+        .banner-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .banner-header h2 {
+            font-size: 28px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .active-badge {
+            background: #48bb78;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .theme-title {
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .theme-description {
+            font-size: 18px;
+            line-height: 1.6;
+            opacity: 0.95;
+            margin-bottom: 20px;
+        }
+
+        .theme-meta {
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 16px;
+        }
+
+        /* Filter Section */
+        .filter-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .filter-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 10px 20px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .filter-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .filter-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        /* Themes Grid */
+        .themes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 30px;
+            margin-top: 30px;
+        }
+
+        /* Theme Card */
+        .theme-card {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+            border: 3px solid transparent;
+        }
+
+        .theme-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+        }
+
+        .theme-card.active {
+            border-color: #48bb78;
+        }
+
+        .theme-card-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 25px;
+            color: white;
+            position: relative;
+        }
+
+        .theme-status {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-active {
+            background: #48bb78;
+        }
+
+        .status-upcoming {
+            background: #4299e1;
+        }
+
+        .status-ended {
+            background: #718096;
+        }
+
+        .theme-card-title {
+            font-size: 22px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            padding-right: 80px;
+        }
+
+        .theme-card-category {
+            font-size: 14px;
+            opacity: 0.9;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .theme-card-body {
+            padding: 25px;
+        }
+
+        .theme-card-description {
+            font-size: 15px;
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .theme-card-meta {
+            display: flex;
+            justify-content: space-between;
+            padding-top: 15px;
+            border-top: 1px solid #e0e0e0;
+            font-size: 14px;
+            color: #999;
+        }
+
+        .meta-date {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .date-label {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .theme-card-footer {
+            padding: 0 25px 25px;
+        }
+
+        .view-btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .view-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+
+        .empty-state-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        /* Back Button */
+        .back-button {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 50px;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+            transition: all 0.3s;
+            z-index: 100;
+        }
+
+        .back-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px 15px;
+            }
+
+            .page-header h1 {
+                font-size: 28px;
+            }
+
+            .themes-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .active-theme-banner {
+                padding: 25px;
+            }
+
+            .theme-title {
+                font-size: 24px;
+            }
+
+            .banner-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+            .theme-meta {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Top Header Bar -->
+    <header class="top-header">
+        <div class="navbar-brand" onclick="window.location.href='index.html'">LenteXhibit</div>
+        <div class="navbar-right">
+            <input type="text" class="search-bar" id="searchBar" placeholder="Search themes...">
+            
+            <div id="authButtons">
+                <button class="auth-button" onclick="window.location.href='index.html'">Sign Up / Log In</button>
+            </div>
+
+            <div id="userDropdown" class="user-dropdown hidden">
+                <button class="user-button" onclick="toggleDropdown()">
+                    <span id="userName">User</span> ▼
+                </button>
+                <div class="dropdown-menu" id="dropdownMenu">
+                    <div class="dropdown-item" onclick="viewMyPortfolio()">My Portfolio</div>
+                    <div class="dropdown-item" onclick="window.location.href='index.html'">Home</div>
+                    <div class="dropdown-item" onclick="window.location.href='about.html'">About</div>
+                    <div class="dropdown-item" onclick="logout()">Log Out</div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="navbar-center">
+            <a class="nav-link" onclick="window.location.href='about.html'">About</a>
+            <a class="nav-link" onclick="window.location.href='portfolio.html'">Portfolios</a>
+            <a class="nav-link active">Themes</a>
+            <a class="nav-link" onclick="alert('Photos page coming soon!')">Photos</a>
+            <a class="nav-link" onclick="alert('Graphics page coming soon!')">Graphics</a>
+            <a class="nav-link" onclick="alert('Videos page coming soon!')">Videos</a>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container">
+        <!-- Page Header -->
+        <div class="page-header">
+            <h1>🎨 Voting Themes</h1>
+            <p>Explore past, present, and upcoming voting themes</p>
+        </div>
+
+        <!-- Active Theme Banner -->
+        <div id="activeThemeBanner" class="hidden">
+            <!-- Will be populated by JavaScript -->
+        </div>
+
+        <!-- Filter Section -->
+        <div class="filter-section">
+            <div class="filter-buttons">
+                <button class="filter-btn active" onclick="filterByStatus('All')">All Themes</button>
+                <button class="filter-btn" onclick="filterByStatus('Active')">Active</button>
+                <button class="filter-btn" onclick="filterByStatus('Upcoming')">Upcoming</button>
+                <button class="filter-btn" onclick="filterByStatus('Ended')">Ended</button>
+            </div>
+            <select id="categoryFilter" onchange="filterByCategory(this.value)" style="padding: 10px 20px; border-radius: 20px; border: 2px solid #667eea; font-weight: 600; cursor: pointer;">
+                <option value="All">All Categories</option>
+                <option value="Photos">Photos</option>
+                <option value="Graphics">Graphics</option>
+                <option value="Videos">Videos</option>
+            </select>
+        </div>
+
+        <!-- Themes Grid -->
+        <div class="themes-grid" id="themesGrid">
+            <div class="loading">Loading themes...</div>
+        </div>
+    </div>
+
+    <!-- Back to Homepage Button -->
+    <button class="back-button" onclick="window.location.href='index.html'">← Back to Homepage</button>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:5000/api';
+        let currentUser = null;
+        let currentStatus = 'All';
+        let currentCategory = 'All';
+        let allThemes = [];
+
+        // Check authentication on page load
+        window.onload = async function() {
+            await checkAuth();
+            await loadThemes();
+            setupSearch();
+        };
+
+        async function checkAuth() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/auth/verify`, {
+                    credentials: 'include'
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    currentUser = data.user;
+                    updateUIForLoggedInUser();
+                }
+            } catch (error) {
+                console.log('Not authenticated');
+            }
+        }
+
+        function updateUIForLoggedInUser() {
+            document.getElementById('authButtons').classList.add('hidden');
+            document.getElementById('userDropdown').classList.remove('hidden');
+            document.getElementById('userName').textContent = currentUser.name;
+        }
+
+        function toggleDropdown() {
+            document.getElementById('dropdownMenu').classList.toggle('show');
+        }
+
+        window.onclick = function(event) {
+            if (!event.target.matches('.user-button')) {
+                const dropdown = document.getElementById('dropdownMenu');
+                if (dropdown.classList.contains('show')) {
+                    dropdown.classList.remove('show');
+                }
+            }
+        };
+
+        async function logout() {
+            if (!confirm('Are you sure you want to log out?')) return;
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/auth/logout`, {
+                    method: 'POST',
+                    credentials: 'include'
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    window.location.href = 'index.html';
+                }
+            } catch (error) {
+                console.error('Logout error:', error);
+            }
+        }
+
+        async function loadThemes() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/themes`);
+                const data = await response.json();
+
+                if (data.success) {
+                    allThemes = data.themes;
+                    displayActiveTheme(allThemes);
+                    displayThemes(allThemes);
+                } else {
+                    document.getElementById('themesGrid').innerHTML = 
+                        '<div class="empty-state"><div class="empty-state-icon">📦</div><p>No themes found</p></div>';
+                }
+            } catch (error) {
+                console.error('Error loading themes:', error);
+                document.getElementById('themesGrid').innerHTML = 
+                    '<div class="empty-state"><div class="empty-state-icon">❌</div><p>Error loading themes</p></div>';
+            }
+        }
+
+        function displayActiveTheme(themes) {
+            const activeTheme = themes.find(theme => theme.status === 'Active');
+            const banner = document.getElementById('activeThemeBanner');
+
+            if (activeTheme) {
+                const categoryIcon = activeTheme.category === 'Photos' ? '📷' : 
+                                   activeTheme.category === 'Graphics' ? '🎨' : '🎬';
+                
+                const endDate = new Date(activeTheme.endDate).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+
+                banner.innerHTML = `
+                    <div class="banner-header">
+                        <h2>🔥 Currently Active Theme</h2>
+                        <span class="active-badge">VOTING NOW</span>
+                    </div>
+                    <div class="theme-title">${activeTheme.title}</div>
+                    <div class="theme-description">${activeTheme.description}</div>
+                    <div class="theme-meta">
+                        <div class="meta-item">
+                            <span>${categoryIcon}</span>
+                            <span>${activeTheme.category}</span>
+                        </div>
+                        <div class="meta-item">
+                            <span>📅</span>
+                            <span>Voting ends: ${endDate}</span>
+                        </div>
+                        <div class="meta-item">
+                            <span>🗳️</span>
+                            <span>${activeTheme.submissions?.length || 0} submissions</span>
+                        </div>
+                    </div>
+                `;
+                banner.classList.remove('hidden');
+            } else {
+                banner.classList.add('hidden');
+            }
+        }
+
+        function displayThemes(themes) {
+            const grid = document.getElementById('themesGrid');
+            
+            // Filter themes
+            let filteredThemes = themes;
+            if (currentStatus !== 'All') {
+                filteredThemes = filteredThemes.filter(theme => theme.status === currentStatus);
+            }
+            if (currentCategory !== 'All') {
+                filteredThemes = filteredThemes.filter(theme => theme.category === currentCategory);
+            }
+
+            if (filteredThemes.length === 0) {
+                grid.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🔍</div><p>No themes found matching your filters</p></div>';
+                return;
+            }
+
+            grid.innerHTML = filteredThemes.map(theme => createThemeCard(theme)).join('');
+        }
+
+        function createThemeCard(theme) {
+            const categoryIcon = theme.category === 'Photos' ? '📷' : 
+                               theme.category === 'Graphics' ? '🎨' : '🎬';
+            
+            const statusClass = theme.status === 'Active' ? 'status-active' : 
+                              theme.status === 'Upcoming' ? 'status-upcoming' : 'status-ended';
+            
+            const startDate = new Date(theme.startDate).toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric'
+            });
+            
+            const endDate = new Date(theme.endDate).toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric'
+            });
+
+            const activeClass = theme.status === 'Active' ? 'active' : '';
+
+            return `
+                <div class="theme-card ${activeClass}">
+                    <div class="theme-card-header">
+                        <span class="theme-status ${statusClass}">${theme.status}</span>
+                        <div class="theme-card-title">${theme.title}</div>
+                        <div class="theme-card-category">
+                            <span>${categoryIcon}</span>
+                            <span>${theme.category}</span>
+                        </div>
+                    </div>
+                    <div class="theme-card-body">
+                        <div class="theme-card-description">${theme.description}</div>
+                        <div class="theme-card-meta">
+                            <div class="meta-date">
+                                <span class="date-label">Start Date</span>
+                                <span>${startDate}</span>
+                            </div>
+                            <div class="meta-date">
+                                <span class="date-label">End Date</span>
+                                <span>${endDate}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="theme-card-footer">
+                        <button class="view-btn" onclick="viewTheme('${theme._id}')">
+                            ${theme.status === 'Active' ? 'View & Vote' : 'View Details'}
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function filterByStatus(status) {
+            currentStatus = status;
+            
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            displayThemes(allThemes);
+        }
+
+        function filterByCategory(category) {
+            currentCategory = category;
+            displayThemes(allThemes);
+        }
+
+        function viewTheme(themeId) {
+            const theme = allThemes.find(t => t._id === themeId);
+            if (theme && theme.status === 'Active') {
+                alert(`Viewing active theme: ${theme.title}\n\nThis would show the voting page with all submissions.`);
+                // TODO: Navigate to theme voting page
+                // window.location.href = `theme-voting.html?id=${themeId}`;
+            } else {
+                alert(`Viewing theme: ${themeId}\n\nThis would show the theme details and past submissions.`);
+                // TODO: Navigate to theme detail page
+                // window.location.href = `theme-detail.html?id=${themeId}`;
+            }
+        }
+
+        function viewMyPortfolio() {
+            if (currentUser) {
+                alert(`View portfolio for: ${currentUser.name}\n\nThis would open your portfolio page.`);
+            }
+        }
+
+        function setupSearch() {
+            const searchBar = document.getElementById('searchBar');
+            let searchTimeout;
+
+            searchBar.addEventListener('input', function() {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    const query = this.value.trim().toLowerCase();
+                    if (query) {
+                        const filtered = allThemes.filter(theme => 
+                            theme.title.toLowerCase().includes(query) ||
+                            theme.description.toLowerCase().includes(query) ||
+                            theme.category.toLowerCase().includes(query)
+                        );
+                        displayThemes(filtered);
+                    } else {
+                        displayThemes(allThemes);
+                    }
+                }, 500);
+            });
+        }
+    </script>
+</body>
+</html>

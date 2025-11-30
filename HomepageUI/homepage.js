@@ -154,7 +154,7 @@ function backToStep1() {
 // Register User
 async function registerUser(userData) {
     try {
-        const response = await fetch(`${API_BASE_URL}/users/register`, {
+        const response = await fetch(`${API_BASE_URL}/auth/signup`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
@@ -164,16 +164,26 @@ async function registerUser(userData) {
         const data = await response.json();
 
         if (data.success) {
-            alert(data.message);
-            
             if (userData.userType === 'guest') {
-                // Auto-login for guests
-                await loginUser(userData.email, userData.name);
+                // Guest is auto-logged in by backend
+                alert('Welcome! You are now logged in as a guest.');
+                closeAuthModal();
+                await checkAuth(); // Refresh auth state
+                location.reload();
+            } else {
+                // Member needs approval
+                alert(data.message);
+                closeAuthModal();
             }
-            
-            closeAuthModal();
         } else {
-            alert(data.message || 'Registration failed');
+            // Check if user already exists - allow login
+            if (data.message && data.message.includes('already registered')) {
+                if (confirm(data.message + '\n\nWould you like to log in instead?')) {
+                    await loginUser(userData.email);
+                }
+            } else {
+                alert(data.message || 'Registration failed');
+            }
         }
     } catch (error) {
         console.error('Registration error:', error);
@@ -186,19 +196,21 @@ async function registerUser(userData) {
  * On success, sets `currentUser`, updates UI and reloads the page.
  * Uses cookies/session via `credentials: 'include'`.
  */
-async function loginUser(email, name) {
+async function loginUser(email) {
     try {
         const response = await fetch(`${API_BASE_URL}/auth/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
-            body: JSON.stringify({ email, name })
+            body: JSON.stringify({ email })
         });
 
         const data = await response.json();
 
         if (data.success) {
             currentUser = data.user;
+            alert('Login successful!');
+            closeAuthModal();
             updateUIForLoggedInUser();
             location.reload();
         } else {
@@ -206,6 +218,7 @@ async function loginUser(email, name) {
         }
     } catch (error) {
         console.error('Login error:', error);
+        alert('Error during login. Please try again.');
     }
 }
 
@@ -229,6 +242,7 @@ async function logout() {
         }
     } catch (error) {
         console.error('Logout error:', error);
+        alert('Error during logout. Please try again.');
     }
 }
 
@@ -358,12 +372,8 @@ function viewWork(workId) {
 /**
  * Opens the current user's portfolio. If no user is logged in this is a no-op.
  */
-function viewMyPortfolio() {
-    if (currentUser) {
-        alert(`View portfolio for: ${currentUser.name}\n\nThis would open your portfolio page.`);
-        // TODO: Navigate to portfolio page
-        // window.location.href = `portfolio.html?userId=${currentUser._id}`;
-    }
+function viewPortfolio(portfolioId) {
+    window.location.href = `portfolio_detail.html?id=${portfolioId}`;
 }
 
 /**
@@ -373,6 +383,16 @@ function viewMyPortfolio() {
 function showSection(section) {
     if (section === 'about') {
         window.location.href = 'about.html';
+    } else if (section === 'portfolios') {
+        window.location.href = 'portfolio.html';  
+    } else if (section === 'themes') {
+        window.location.href = 'theme.html';
+    } else if (section === 'photos') {
+        window.location.href = 'photos.html';
+    } else if (section === 'graphics') {
+        window.location.href = 'graphics.html';
+    } else if (section === 'videos') {
+        window.location.href = 'videos.html';
     } else {
         alert(`Navigate to: ${section}\n\nThis would show the ${section} page.`);
     }

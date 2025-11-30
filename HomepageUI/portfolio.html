@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolios - LenteXhibit</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+            min-height: 100vh;
+        }
+
+        /* Top Header Bar */
+        .top-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .navbar-brand {
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .navbar-right {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .search-bar {
+            padding: 8px 15px;
+            border-radius: 20px;
+            border: none;
+            width: 250px;
+        }
+
+        .auth-button {
+            padding: 8px 20px;
+            border-radius: 20px;
+            border: 2px solid white;
+            background: transparent;
+            color: white;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .auth-button:hover {
+            background: white;
+            color: #667eea;
+        }
+
+        .user-dropdown {
+            position: relative;
+        }
+
+        .user-button {
+            background: white;
+            color: #667eea;
+            padding: 8px 20px;
+            border-radius: 20px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .dropdown-menu {
+            display: none;
+            position: absolute;
+            top: 40px;
+            right: 0;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+            min-width: 200px;
+            overflow: hidden;
+        }
+
+        .dropdown-menu.show {
+            display: block;
+        }
+
+        .dropdown-item {
+            padding: 12px 20px;
+            cursor: pointer;
+            color: #333;
+            transition: background 0.3s;
+        }
+
+        .dropdown-item:hover {
+            background: #f5f5f5;
+        }
+
+        /* Navigation Bar */
+        .navbar {
+            background: white;
+            padding: 15px 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            position: sticky;
+            top: 54px;
+            z-index: 999;
+        }
+
+        .navbar-center {
+            display: flex;
+            gap: 30px;
+            align-items: center;
+        }
+
+        .nav-link {
+            color: #333;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: color 0.3s;
+            padding: 8px 15px;
+            border-radius: 5px;
+        }
+
+        .nav-link:hover {
+            color: #667eea;
+            background: #f5f5f5;
+        }
+
+        /* Container */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        /* Page Header */
+        .page-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .page-header h1 {
+            font-size: 36px;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .page-header p {
+            font-size: 18px;
+            color: #666;
+        }
+
+        /* Portfolio Grid */
+        .portfolio-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 30px;
+            margin-top: 30px;
+        }
+
+        /* Create Portfolio Card */
+        .create-portfolio-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.3);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 350px;
+        }
+
+        .create-portfolio-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 30px rgba(102, 126, 234, 0.5);
+        }
+
+        .create-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+        }
+
+        .create-portfolio-card h3 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .create-portfolio-card p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        /* Portfolio Card */
+        .portfolio-card {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .portfolio-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+        }
+
+        .portfolio-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 30px;
+            text-align: center;
+            color: white;
+        }
+
+        .profile-photo {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            margin: 0 auto 15px;
+            border: 4px solid white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+
+        .portfolio-name {
+            font-size: 22px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .portfolio-cluster {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        .portfolio-body {
+            padding: 20px;
+        }
+
+        .portfolio-info {
+            display: flex;
+            justify-content: space-around;
+            padding: 15px 0;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .info-item {
+            text-align: center;
+        }
+
+        .info-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .info-label {
+            font-size: 14px;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        /* Filter Section */
+        .filter-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .filter-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 10px 20px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .filter-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .filter-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+
+        .empty-state-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .close-button {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #999;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 14px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        /* Back Button */
+        .back-button {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 50px;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+            transition: all 0.3s;
+            z-index: 100;
+        }
+
+        .back-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px 15px;
+            }
+
+            .page-header h1 {
+                font-size: 28px;
+            }
+
+            .portfolio-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .filter-section {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .filter-buttons {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Top Header Bar -->
+    <header class="top-header">
+        <div class="navbar-brand" onclick="window.location.href='index.html'">LenteXhibit</div>
+        <div class="navbar-right">
+            <input type="text" class="search-bar" id="searchBar" placeholder="Search portfolios...">
+            
+            <div id="authButtons">
+                <button class="auth-button" onclick="window.location.href='index.html'">Sign Up / Log In</button>
+            </div>
+
+            <div id="userDropdown" class="user-dropdown hidden">
+                <button class="user-button" onclick="toggleDropdown()">
+                    <span id="userName">User</span> ▼
+                </button>
+                <div class="dropdown-menu" id="dropdownMenu">
+                    <div class="dropdown-item" onclick="viewMyPortfolio()">My Portfolio</div>
+                    <div class="dropdown-item" onclick="window.location.href='index.html'">Home</div>
+                    <div class="dropdown-item" onclick="window.location.href='about.html'">About</div>
+                    <div class="dropdown-item" onclick="logout()">Log Out</div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="navbar-center">
+            <a class="nav-link" onclick="window.location.href='about.html'">About</a>
+            <a class="nav-link" style="color: #667eea;">Portfolios</a>
+            <a class="nav-link" onclick="alert('Themes page coming soon!')">Themes</a>
+            <a class="nav-link" onclick="alert('Photos page coming soon!')">Photos</a>
+            <a class="nav-link" onclick="alert('Graphics page coming soon!')">Graphics</a>
+            <a class="nav-link" onclick="alert('Videos page coming soon!')">Videos</a>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container">
+        <!-- Page Header -->
+        <div class="page-header">
+            <h1>📁 Member Portfolios</h1>
+            <p>Explore the creative works of UP Lente members</p>
+        </div>
+
+        <!-- Filter Section -->
+        <div class="filter-section">
+            <div class="filter-buttons">
+                <button class="filter-btn active" onclick="filterByCluster('All')">All Members</button>
+                <button class="filter-btn" onclick="filterByCluster('Photography')">Photography Cluster</button>
+                <button class="filter-btn" onclick="filterByCluster('Graphics')">Graphics Cluster</button>
+                <button class="filter-btn" onclick="filterByCluster('Videography')">Videography Cluster</button>
+            </div>
+        </div>
+
+        <!-- Portfolio Grid -->
+        <div class="portfolio-grid" id="portfolioGrid">
+            <div class="loading">Loading portfolios...</div>
+        </div>
+    </div>
+
+    <!-- Create Portfolio Modal -->
+    <div class="modal" id="createPortfolioModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Create Your Portfolio</h2>
+                <button class="close-button" onclick="closeCreateModal()">&times;</button>
+            </div>
+            <form id="createPortfolioForm">
+                <div class="form-group">
+                    <label>Portfolio Title</label>
+                    <input type="text" id="portfolioTitle" placeholder="e.g., My Creative Journey" required>
+                </div>
+                <div class="form-group">
+                    <label>Bio</label>
+                    <textarea id="portfolioBio" placeholder="Tell us about yourself and your work..." required></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Social Media Links (Optional)</label>
+                    <input type="url" id="socialMedia" placeholder="Instagram, Facebook, or personal website">
+                </div>
+                <button type="submit" class="submit-btn">Create Portfolio</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Back to Homepage Button -->
+    <button class="back-button" onclick="window.location.href='index.html'">← Back to Homepage</button>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:5000/api';
+        let currentUser = null;
+        let currentCluster = 'All';
+
+        // Check authentication on page load
+        window.onload = async function() {
+            await checkAuth();
+            loadPortfolios();
+            setupSearch();
+        };
+
+        async function checkAuth() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/auth/verify`, {
+                    credentials: 'include'
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    currentUser = data.user;
+                    updateUIForLoggedInUser();
+                }
+            } catch (error) {
+                console.log('Not authenticated');
+            }
+        }
+
+        function updateUIForLoggedInUser() {
+            document.getElementById('authButtons').classList.add('hidden');
+            document.getElementById('userDropdown').classList.remove('hidden');
+            document.getElementById('userName').textContent = currentUser.name;
+        }
+
+        function toggleDropdown() {
+            document.getElementById('dropdownMenu').classList.toggle('show');
+        }
+
+        window.onclick = function(event) {
+            if (!event.target.matches('.user-button')) {
+                const dropdown = document.getElementById('dropdownMenu');
+                if (dropdown.classList.contains('show')) {
+                    dropdown.classList.remove('show');
+                }
+            }
+        };
+
+        async function logout() {
+            if (!confirm('Are you sure you want to log out?')) return;
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/auth/logout`, {
+                    method: 'POST',
+                    credentials: 'include'
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    window.location.href = 'index.html';
+                }
+            } catch (error) {
+                console.error('Logout error:', error);
+            }
+        }
+
+        async function loadPortfolios() {
+            try {
+                const clusterParam = currentCluster !== 'All' ? `?cluster=${currentCluster}` : '';
+                const response = await fetch(`${API_BASE_URL}/portfolios${clusterParam}`);
+                const data = await response.json();
+
+                const grid = document.getElementById('portfolioGrid');
+                grid.innerHTML = '';
+
+                // Add create portfolio card for members
+                if (currentUser && currentUser.userType === 'member') {
+                    grid.innerHTML += `
+                        <div class="create-portfolio-card" onclick="showCreateModal()">
+                            <div class="create-icon">➕</div>
+                            <h3>Create Portfolio</h3>
+                            <p>Showcase your creative works</p>
+                        </div>
+                    `;
+                }
+
+                // Add existing portfolios
+                if (data.portfolios && data.portfolios.length > 0) {
+                    data.portfolios.forEach(portfolio => {
+                        grid.innerHTML += createPortfolioCard(portfolio);
+                    });
+                } else if (!currentUser || currentUser.userType !== 'member') {
+                    grid.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📂</div><p>No portfolios found</p></div>';
+                }
+            } catch (error) {
+                console.error('Error loading portfolios:', error);
+                document.getElementById('portfolioGrid').innerHTML = '<div class="empty-state"><div class="empty-state-icon">❌</div><p>Error loading portfolios</p></div>';
+            }
+        }
+
+        function createPortfolioCard(portfolio) {
+            const userIcon = portfolio.userId?.cluster === 'Photography' ? '📷' : 
+                           portfolio.userId?.cluster === 'Graphics' ? '🎨' : '🎬';
+            
+            return `
+                <div class="portfolio-card" onclick="viewPortfolio('${portfolio._id}')">
+                    <div class="portfolio-header">
+                        <div class="profile-photo">${userIcon}</div>
+                        <div class="portfolio-name">${portfolio.userId?.name || 'Unknown'}</div>
+                        <div class="portfolio-cluster">${portfolio.userId?.cluster || 'Member'}</div>
+                    </div>
+                    <div class="portfolio-body">
+                        <div class="portfolio-info">
+                            <div class="info-item">
+                                <div class="info-value">${portfolio.works?.length || 0}</div>
+                                <div class="info-label">Works</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-value">${portfolio.totalVotes || 0}</div>
+                                <div class="info-label">Votes</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function filterByCluster(cluster) {
+            currentCluster = cluster;
+            
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            loadPortfolios();
+        }
+
+        function showCreateModal() {
+            if (!currentUser) {
+                alert('Please log in to create a portfolio');
+                return;
+            }
+            if (currentUser.userType !== 'member') {
+                alert('Only members can create portfolios');
+                return;
+            }
+            document.getElementById('createPortfolioModal').classList.add('show');
+        }
+
+        function closeCreateModal() {
+            document.getElementById('createPortfolioModal').classList.remove('show');
+            document.getElementById('createPortfolioForm').reset();
+        }
+
+        document.getElementById('createPortfolioForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const portfolioData = {
+                title: document.getElementById('portfolioTitle').value,
+                bio: document.getElementById('portfolioBio').value,
+                socialMedia: document.getElementById('socialMedia').value
+            };
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/portfolios`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify(portfolioData)
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    alert('Portfolio created successfully!');
+                    closeCreateModal();
+                    loadPortfolios();
+                } else {
+                    alert(data.message || 'Failed to create portfolio');
+                }
+            } catch (error) {
+                console.error('Error creating portfolio:', error);
+                alert('Error creating portfolio. Please try again.');
+            }
+        });
+
+        function viewPortfolio(portfolioId) {
+            alert(`Viewing portfolio: ${portfolioId}\n\nThis would open the detailed portfolio page.`);
+            // TODO: Navigate to portfolio detail page
+            // window.location.href = `portfolio-detail.html?id=${portfolioId}`;
+        }
+
+        function viewMyPortfolio() {
+            if (currentUser) {
+                alert(`View portfolio for: ${currentUser.name}\n\nThis would open your portfolio page.`);
+            }
+        }
+
+        function setupSearch() {
+            const searchBar = document.getElementById('searchBar');
+            let searchTimeout;
+
+            searchBar.addEventListener('input', function() {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    const query = this.value.trim();
+                    if (query) {
+                        searchPortfolios(query);
+                    } else {
+                        loadPortfolios();
+                    }
+                }, 500);
+            });
+        }
+
+        async function searchPortfolios(query) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/portfolios?search=${encodeURIComponent(query)}`);
+                const data = await response.json();
+
+                const grid = document.getElementById('portfolioGrid');
+                grid.innerHTML = '';
+
+                if (currentUser && currentUser.userType === 'member') {
+                    grid.innerHTML += `
+                        <div class="create-portfolio-card" onclick="showCreateModal()">
+                            <div class="create-icon">➕</div>
+                            <h3>Create Portfolio</h3>
+                            <p>Showcase your creative works</p>
+                        </div>
+                    `;
+                }
+
+                if (data.portfolios && data.portfolios.length > 0) {
+                    data.portfolios.forEach(portfolio => {
+                        grid.innerHTML += createPortfolioCard(portfolio);
+                    });
+                } else {
+                    grid.innerHTML += `<div class="empty-state"><div class="empty-state-icon">🔍</div><p>No portfolios found for "${query}"</p></div>`;
+                }
+            } catch (error) {
+                console.error('Error searching portfolios:', error);
+            }
+        }
+    </script>
+</body>
+</html>

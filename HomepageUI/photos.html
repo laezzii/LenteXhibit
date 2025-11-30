@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Photos - LenteXhibit</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+            min-height: 100vh;
+        }
+
+        /* Top Header Bar */
+        .top-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .navbar-brand {
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .navbar-right {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .search-bar {
+            padding: 8px 15px;
+            border-radius: 20px;
+            border: none;
+            width: 250px;
+        }
+
+        .auth-button {
+            padding: 8px 20px;
+            border-radius: 20px;
+            border: 2px solid white;
+            background: transparent;
+            color: white;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .auth-button:hover {
+            background: white;
+            color: #667eea;
+        }
+
+        .user-dropdown {
+            position: relative;
+        }
+
+        .user-button {
+            background: white;
+            color: #667eea;
+            padding: 8px 20px;
+            border-radius: 20px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .dropdown-menu {
+            display: none;
+            position: absolute;
+            top: 40px;
+            right: 0;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+            min-width: 200px;
+            overflow: hidden;
+        }
+
+        .dropdown-menu.show {
+            display: block;
+        }
+
+        .dropdown-item {
+            padding: 12px 20px;
+            cursor: pointer;
+            color: #333;
+            transition: background 0.3s;
+        }
+
+        .dropdown-item:hover {
+            background: #f5f5f5;
+        }
+
+        /* Navigation Bar */
+        .navbar {
+            background: white;
+            padding: 15px 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            position: sticky;
+            top: 54px;
+            z-index: 999;
+        }
+
+        .navbar-center {
+            display: flex;
+            gap: 30px;
+            align-items: center;
+        }
+
+        .nav-link {
+            color: #333;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: color 0.3s;
+            padding: 8px 15px;
+            border-radius: 5px;
+        }
+
+        .nav-link:hover {
+            color: #667eea;
+            background: #f5f5f5;
+        }
+
+        .nav-link.active {
+            color: #667eea;
+        }
+
+        /* Container */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        /* Page Header */
+        .page-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .page-header h1 {
+            font-size: 36px;
+            color: #333;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .page-header p {
+            font-size: 18px;
+            color: #666;
+        }
+
+        /* Filter Section */
+        .filter-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 15px;
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .filter-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 10px 20px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .filter-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .filter-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .sort-select {
+            padding: 10px 20px;
+            border-radius: 20px;
+            border: 2px solid #667eea;
+            font-weight: 600;
+            cursor: pointer;
+            background: white;
+        }
+
+        /* Photos Grid */
+        .photos-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 25px;
+            margin-top: 30px;
+        }
+
+        /* Photo Card */
+        .photo-card {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .photo-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+        }
+
+        .photo-image {
+            width: 100%;
+            height: 300px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 80px;
+            color: white;
+        }
+
+        .photo-info {
+            padding: 20px;
+        }
+
+        .photo-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .photo-author {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .photo-stats {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 12px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 14px;
+            color: #999;
+        }
+
+        .vote-count {
+            color: #e74c3c;
+            font-weight: 600;
+        }
+
+        /* Stats Banner */
+        .stats-banner {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 30px;
+        }
+
+        .stat-box {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 36px;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 16px;
+            color: #666;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+
+        .empty-state-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        /* Back Button */
+        .back-button {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 50px;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+            transition: all 0.3s;
+            z-index: 100;
+        }
+
+        .back-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px 15px;
+            }
+
+            .page-header h1 {
+                font-size: 28px;
+            }
+
+            .photos-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-banner {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Top Header Bar -->
+    <header class="top-header">
+        <div class="navbar-brand" onclick="window.location.href='index.html'">LenteXhibit</div>
+        <div class="navbar-right">
+            <input type="text" class="search-bar" id="searchBar" placeholder="Search photos...">
+            
+            <div id="authButtons">
+                <button class="auth-button" onclick="window.location.href='index.html'">Sign Up / Log In</button>
+            </div>
+
+            <div id="userDropdown" class="user-dropdown hidden">
+                <button class="user-button" onclick="toggleDropdown()">
+                    <span id="userName">User</span> ▼
+                </button>
+                <div class="dropdown-menu" id="dropdownMenu">
+                    <div class="dropdown-item" onclick="viewMyPortfolio()">My Portfolio</div>
+                    <div class="dropdown-item" onclick="window.location.href='index.html'">Home</div>
+                    <div class="dropdown-item" onclick="window.location.href='about.html'">About</div>
+                    <div class="dropdown-item" onclick="logout()">Log Out</div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="navbar-center">
+            <a class="nav-link" onclick="window.location.href='about.html'">About</a>
+            <a class="nav-link" onclick="window.location.href='portfolio.html'">Portfolios</a>
+            <a class="nav-link" onclick="window.location.href='theme.html'">Themes</a>
+            <a class="nav-link active">Photos</a>
+            <a class="nav-link" onclick="window.location.href='graphics.html'">Graphics</a>
+            <a class="nav-link" onclick="window.location.href='videos.html'">Videos</a>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container">
+        <!-- Page Header -->
+        <div class="page-header">
+            <h1>📷 Photography Gallery</h1>
+            <p>Capturing moments and telling stories through the lens</p>
+        </div>
+
+        <!-- Stats Banner -->
+        <div class="stats-banner">
+            <div class="stat-box">
+                <div class="stat-value" id="totalPhotos">0</div>
+                <div class="stat-label">Total Photos</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value" id="totalPhotographers">0</div>
+                <div class="stat-label">Members</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value" id="totalVotes">0</div>
+                <div class="stat-label">Total Votes</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value" id="featuredCount">0</div>
+                <div class="stat-label">Featured</div>
+            </div>
+        </div>
+
+        <!-- Filter Section -->
+        <div class="filter-section">
+            <div class="filter-buttons">
+                <button class="filter-btn active" onclick="filterPhotos('All')">All Photos</button>
+                <button class="filter-btn" onclick="filterPhotos('Featured')">Featured</button>
+                <button class="filter-btn" onclick="filterPhotos('Recent')">Recent</button>
+                <button class="filter-btn" onclick="filterPhotos('Popular')">Most Popular</button>
+            </div>
+            <select class="sort-select" id="sortSelect" onchange="sortPhotos(this.value)">
+                <option value="recent">Most Recent</option>
+                <option value="popular">Most Popular</option>
+                <option value="title">Title (A-Z)</option>
+                <option value="author">Author (A-Z)</option>
+            </select>
+        </div>
+
+        <!-- Photos Grid -->
+        <div class="photos-grid" id="photosGrid">
+            <div class="loading">Loading photos...</div>
+        </div>
+    </div>
+
+    <!-- Back to Homepage Button -->
+    <button class="back-button" onclick="window.location.href='index.html'">← Back to Homepage</button>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:5000/api';
+        let currentUser = null;
+        let allPhotos = [];
+        let currentFilter = 'All';
+
+        // Check authentication on page load
+        window.onload = async function() {
+            await checkAuth();
+            await loadPhotos();
+            setupSearch();
+        };
+
+        async function checkAuth() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/auth/verify`, {
+                    credentials: 'include'
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    currentUser = data.user;
+                    updateUIForLoggedInUser();
+                }
+            } catch (error) {
+                console.log('Not authenticated');
+            }
+        }
+
+        function updateUIForLoggedInUser() {
+            document.getElementById('authButtons').classList.add('hidden');
+            document.getElementById('userDropdown').classList.remove('hidden');
+            document.getElementById('userName').textContent = currentUser.name;
+        }
+
+        function toggleDropdown() {
+            document.getElementById('dropdownMenu').classList.toggle('show');
+        }
+
+        window.onclick = function(event) {
+            if (!event.target.matches('.user-button')) {
+                const dropdown = document.getElementById('dropdownMenu');
+                if (dropdown.classList.contains('show')) {
+                    dropdown.classList.remove('show');
+                }
+            }
+        };
+
+        async function logout() {
+            if (!confirm('Are you sure you want to log out?')) return;
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/auth/logout`, {
+                    method: 'POST',
+                    credentials: 'include'
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    window.location.href = 'index.html';
+                }
+            } catch (error) {
+                console.error('Logout error:', error);
+            }
+        }
+
+        async function loadPhotos() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/works?category=Photos&limit=100`);
+                const data = await response.json();
+
+                if (data.success) {
+                    allPhotos = data.works;
+                    updateStats(allPhotos);
+                    displayPhotos(allPhotos);
+                } else {
+                    document.getElementById('photosGrid').innerHTML = 
+                        '<div class="empty-state"><div class="empty-state-icon">📦</div><p>No photos found</p></div>';
+                }
+            } catch (error) {
+                console.error('Error loading photos:', error);
+                document.getElementById('photosGrid').innerHTML = 
+                    '<div class="empty-state"><div class="empty-state-icon">❌</div><p>Error loading photos</p></div>';
+            }
+        }
+
+        function updateStats(photos) {
+            document.getElementById('totalPhotos').textContent = photos.length;
+            
+            const uniqueAuthors = new Set(photos.map(p => p.userId?._id).filter(Boolean));
+            document.getElementById('totalPhotographers').textContent = uniqueAuthors.size;
+            
+            const totalVotes = photos.reduce((sum, p) => sum + (p.voteCount || 0), 0);
+            document.getElementById('totalVotes').textContent = totalVotes;
+            
+            const featured = photos.filter(p => p.featured).length;
+            document.getElementById('featuredCount').textContent = featured;
+        }
+
+        function displayPhotos(photos) {
+            const grid = document.getElementById('photosGrid');
+            
+            if (photos.length === 0) {
+                grid.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🔍</div><p>No photos found</p></div>';
+                return;
+            }
+
+            grid.innerHTML = photos.map(photo => createPhotoCard(photo)).join('');
+        }
+
+        function createPhotoCard(photo) {
+            return `
+                <div class="photo-card" onclick="viewPhoto('${photo._id}')">
+                    <div class="photo-image">📷</div>
+                    <div class="photo-info">
+                        <div class="photo-title">${photo.title}</div>
+                        <div class="photo-author">
+                            <span>👤</span>
+                            <span>by ${photo.userId?.name || 'Unknown'}</span>
+                        </div>
+                        <div class="photo-stats">
+                            <div class="stat-item">
+                                <span>❤️</span>
+                                <span class="vote-count">${photo.voteCount || 0} votes</span>
+                            </div>
+                            ${photo.featured ? '<div class="stat-item">⭐ Featured</div>' : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function filterPhotos(filter) {
+            currentFilter = filter;
+            
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            let filtered = [...allPhotos];
+
+            switch(filter) {
+                case 'Featured':
+                    filtered = filtered.filter(p => p.featured);
+                    break;
+                case 'Recent':
+                    filtered = filtered.sort((a, b) => 
+                        new Date(b.createdAt) - new Date(a.createdAt)
+                    ).slice(0, 20);
+                    break;
+                case 'Popular':
+                    filtered = filtered.sort((a, b) => 
+                        (b.voteCount || 0) - (a.voteCount || 0)
+                    ).slice(0, 20);
+                    break;
+            }
+
+            displayPhotos(filtered);
+        }
+
+        function sortPhotos(sortBy) {
+            let sorted = [...allPhotos];
+
+            switch(sortBy) {
+                case 'recent':
+                    sorted = sorted.sort((a, b) => 
+                        new Date(b.createdAt) - new Date(a.createdAt)
+                    );
+                    break;
+                case 'popular':
+                    sorted = sorted.sort((a, b) => 
+                        (b.voteCount || 0) - (a.voteCount || 0)
+                    );
+                    break;
+                case 'title':
+                    sorted = sorted.sort((a, b) => 
+                        a.title.localeCompare(b.title)
+                    );
+                    break;
+                case 'author':
+                    sorted = sorted.sort((a, b) => 
+                        (a.userId?.name || '').localeCompare(b.userId?.name || '')
+                    );
+                    break;
+            }
+
+            allPhotos = sorted;
+            displayPhotos(sorted);
+        }
+
+        function viewPhoto(photoId) {
+            alert(`Viewing photo: ${photoId}\n\nThis would open the photo detail page.`);
+            // TODO: Navigate to photo detail page
+        }
+
+        function viewMyPortfolio() {
+            if (currentUser) {
+                alert(`View portfolio for: ${currentUser.name}\n\nThis would open your portfolio page.`);
+            }
+        }
+
+        function setupSearch() {
+            const searchBar = document.getElementById('searchBar');
+            let searchTimeout;
+
+            searchBar.addEventListener('input', function() {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    const query = this.value.trim().toLowerCase();
+                    if (query) {
+                        const filtered = allPhotos.filter(photo => 
+                            photo.title.toLowerCase().includes(query) ||
+                            (photo.userId?.name || '').toLowerCase().includes(query) ||
+                            (photo.description || '').toLowerCase().includes(query)
+                        );
+                        displayPhotos(filtered);
+                    } else {
+                        displayPhotos(allPhotos);
+                    }
+                }, 500);
+            });
+        }
+    </script>
+</body>
+</html>
