@@ -373,7 +373,26 @@ function viewWork(workId) {
  * Opens the current user's portfolio. If no user is logged in this is a no-op.
  */
 function viewPortfolio(portfolioId) {
-    window.location.href = `portfolio_detail.html?id=${portfolioId}`;
+    if (!currentUser) {
+        alert('Please log in first.');
+        return;
+    }
+
+    if (currentUser.userType !== 'member') {
+        alert('Only members can create portfolios.');
+        return;
+    }
+
+    // Check if member has a portfolio
+    if (currentUser.hasPortfolio && currentUser.portfolioId) {
+        // Redirect to their portfolio
+        window.location.href = `portfolio_detail.html?id=${currentUser.portfolioId}`;
+    } else {
+        // Prompt to create portfolio
+        if (confirm('You do not have a portfolio yet. Would you like to create one now?')) {
+            window.location.href = 'portfolio.html';
+        }
+    }
 }
 
 /**
