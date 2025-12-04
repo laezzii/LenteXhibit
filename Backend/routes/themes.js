@@ -5,6 +5,7 @@
 
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose');
 const { Theme, Work } = require('../models');
 const { isAuthenticated, isAdmin } = require('./auth');
 

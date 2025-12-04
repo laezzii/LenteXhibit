@@ -5,6 +5,7 @@
 
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose');
 const { Portfolio, User, Work } = require('../models');
 const { isAuthenticated } = require('./auth');
 
@@ -33,7 +34,10 @@ router.get('/', async (req, res) => {
 
         // Find portfolios for these users
         const portfolios = await Portfolio.find({ userId: { $in: userIds } })
-            .populate('userId', 'name email cluster position batchName')
+            .populate({
+                path: 'userId',
+                select: 'name email cluster position batchName'
+            })
             .populate({
                 path: 'works',
                 select: 'title category voteCount featured createdAt',
@@ -41,7 +45,10 @@ router.get('/', async (req, res) => {
             })
             .limit(parseInt(limit))
             .skip(parseInt(skip))
-            .sort('-createdAt');
+            .sort('-createdAt')
+            .lean(); // Use lean() for better performance
+        
+        console.log(`Found ${portfolios.length} portfolios`);
 
         res.json({
             success: true,
@@ -59,11 +66,25 @@ router.get('/', async (req, res) => {
     }
 });
 
-// Get Portfolio by ID
-router.get('/:id', async (req, res) => {
+// Get Portfolio by User ID
+router.get('/user/:userId', async (req, res) => {
     try {
-        const portfolio = await Portfolio.findById(req.params.id)
-            .populate('userId', 'name email cluster position batchName')
+        console.log('Fetching portfolio for user:', req.params.userId);
+
+        // Validate userId format
+        if (!mongoose.Types.ObjectId.isValid(req.params.userId)) {
+            console.log('Invalid user ID format');
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid user ID format'
+            });
+        }
+
+        const portfolio = await Portfolio.findOne({userId: req.params.userId})
+            .populate({
+                path: 'userId',
+                select: 'name email cluster position batchName'
+            })
             .populate({
                 path: 'works',
                 populate: {
@@ -73,12 +94,15 @@ router.get('/:id', async (req, res) => {
             });
 
         if (!portfolio) {
-            return res.status(404).json({
+            console.log('No portfolio found for user:', req.params.userId);
+            return res.json({
                 success: false,
-                message: 'Portfolio not found'
+                message: 'Portfolio not found',
+                portfolio: null
             });
         }
 
+        console.log('Portfolio found:', portfolio._id.toString());
         res.json({
             success: true,
             portfolio
@@ -94,11 +118,25 @@ router.get('/:id', async (req, res) => {
     }
 });
 
-// Get Portfolio by User ID
-router.get('/user/:userId', async (req, res) => {
+// Get Portfolio by ID
+router.get('/:id', async (req, res) => {
     try {
-        const portfolio = await Portfolio.findOne({ userId: req.params.userId })
-            .populate('userId', 'name email cluster position batchName')
+        console.log('Fetching portfolio by ID:', req.params.id);
+
+        // Validate portfolio ID format
+        if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+            console.log('Invalid portfolio ID format', req.params);
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid portfolio ID format'
+            });
+        }
+
+        const portfolio = await Portfolio.findById(req.params.id)
+            .populate({
+                path: 'userId',
+                select: 'name email cluster position batchName'
+            })
             .populate({
                 path: 'works',
                 populate: {
@@ -108,11 +146,15 @@ router.get('/user/:userId', async (req, res) => {
             });
 
         if (!portfolio) {
+            console.log('Portfolio not found:', req.params.id);
             return res.status(404).json({
                 success: false,
                 message: 'Portfolio not found'
             });
         }
+
+        console.log('Portfolio found:', portfolio._id.toString());
+        console.log('Works count:', portfolio.works ? portfolio.works.length : 0);
 
         res.json({
             success: true,
@@ -131,9 +173,16 @@ router.get('/user/:userId', async (req, res) => {
 
 // Create Portfolio (Members only)
 router.post('/', isAuthenticated, async (req, res) => {
-    try {
+    try {  
         // Check if user is a member
         const user = await User.findById(req.session.userId);
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: 'User not found'
+            });
+        }
+
         if (user.userType !== 'member') {
             return res.status(403).json({
                 success: false,
@@ -146,7 +195,8 @@ router.post('/', isAuthenticated, async (req, res) => {
         if (existingPortfolio) {
             return res.status(400).json({
                 success: false,
-                message: 'Portfolio already exists for this user'
+                message: 'Portfolio already exists for this user',
+                portfolioId: existingPortfolio._id
             });
         }
 
@@ -161,6 +211,8 @@ router.post('/', isAuthenticated, async (req, res) => {
 
         await newPortfolio.save();
         await newPortfolio.populate('userId', 'name email cluster position batchName');
+
+        console.log('Portfolio created successfully:', newPortfolio._id);
 
         res.status(201).json({
             success: true,
@@ -181,6 +233,14 @@ router.post('/', isAuthenticated, async (req, res) => {
 // Update Portfolio (Owner only)
 router.put('/:id', isAuthenticated, async (req, res) => {
     try {
+        // Validate portfolio ID format
+        if (!mongoose.TypesObjectId.isValid(req.params.id)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid portfolio ID format'
+            });
+        }
+
         const portfolio = await Portfolio.findById(req.params.id);
         
         if (!portfolio) {
@@ -228,6 +288,14 @@ router.put('/:id', isAuthenticated, async (req, res) => {
 // Delete Portfolio (Owner only)
 router.delete('/:id', isAuthenticated, async (req, res) => {
     try {
+        // Validate portfolio ID format
+        if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid portfolio ID format'
+            });
+        }
+
         const portfolio = await Portfolio.findById(req.params.id);
         
         if (!portfolio) {
@@ -265,6 +333,14 @@ router.delete('/:id', isAuthenticated, async (req, res) => {
 // Update Total Votes (called internally when votes change)
 router.patch('/:id/votes', async (req, res) => {
     try {
+        // Validate portfolio ID format
+        if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid portfolio ID format'
+            });
+        }
+
         const portfolio = await Portfolio.findById(req.params.id).populate('works');
         
         if (!portfolio) {

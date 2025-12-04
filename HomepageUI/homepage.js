@@ -372,7 +372,7 @@ function viewWork(workId) {
 /**
  * Opens the current user's portfolio. If no user is logged in this is a no-op.
  */
-function viewPortfolio(portfolioId) {
+async function viewMyPortfolio() {
     if (!currentUser) {
         alert('Please log in first.');
         return;
@@ -383,15 +383,25 @@ function viewPortfolio(portfolioId) {
         return;
     }
 
-    // Check if member has a portfolio
-    if (currentUser.hasPortfolio && currentUser.portfolioId) {
-        // Redirect to their portfolio
-        window.location.href = `portfolio_detail.html?id=${currentUser.portfolioId}`;
-    } else {
-        // Prompt to create portfolio
-        if (confirm('You do not have a portfolio yet. Would you like to create one now?')) {
-            window.location.href = 'portfolio.html';
+    // Fetch the user's portfolio
+    try {
+        const response = await fetch(`${API_BASE_URL}/portfolios/user/${currentUser._id}`, {
+            credentials: 'include'
+        });
+        const data = await response.json();
+        
+        if (data.success && data.portfolio) {
+            // Redirect to their portfolio
+            window.location.href = `portfolio_detail.html?id=${data.portfolio._id}`;
+        } else {
+            // Prompt to create portfolio
+            if (confirm('You do not have a portfolio yet. Would you like to create one now?')) {
+                window.location.href = 'portfolio.html';
+            }
         }
+    } catch (error) {
+        console.error('Error fetching portfolio:', error);
+        alert('Error fetching your portfolio. Please try again later.');
     }
 }
 

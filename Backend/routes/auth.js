@@ -209,14 +209,16 @@ router.get('/verify', async (req, res) => {
         let portfolioId = null;
         if (user.userType === 'member') {
             const portfolio = await Portfolio.findOne({ userId: user._id });
-            hasPortfolio = !!portfolio;
-            portfolioId = portfolio ? portfolio._id : null;
+            if (portfolio) {
+                hasPortfolio = true;
+                portfolioId = portfolio._id.toString(); // convert to string
+            }
         }
 
         res.json({
             success: true,
             user: {
-                _id: user._id,
+                _id: user._id.toString(), //convert to string
                 name: user.name,
                 email: user.email,
                 userType: user.userType,
@@ -224,8 +226,8 @@ router.get('/verify', async (req, res) => {
                 cluster: user.cluster,
                 batchName: user.batchName,
                 position: user.position,
-                hasPortfolio,
-                portfolioId
+                hasPortfolio: hasPortfolio,
+                portfolioId: portfolioId
             }
         });
     } catch (error) {

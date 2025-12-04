@@ -569,249 +569,312 @@
     <button class="back-button" onclick="window.location.href='index.html'">← Back to Homepage</button>
 
     <script>
-        const API_BASE_URL = 'http://localhost:5000/api';
-        let currentUser = null;
-        let currentCluster = 'All';
+    const API_BASE_URL = 'http://localhost:5000/api';
+    let currentUser = null;
+    let currentCluster = 'All';
 
-        // Check authentication on page load
-        window.onload = async function() {
-            await checkAuth();
-            loadPortfolios();
-            setupSearch();
-        };
+    window.onload = async function() {
+        await checkAuth();
+        loadPortfolios();
+        setupSearch();
+    };
 
-        async function checkAuth() {
-            try {
-                const response = await fetch(`${API_BASE_URL}/auth/verify`, {
-                    credentials: 'include'
-                });
-                const data = await response.json();
-                
-                if (data.success) {
-                    currentUser = data.user;
-                    updateUIForLoggedInUser();
-                }
-            } catch (error) {
-                console.log('Not authenticated');
-            }
-        }
-
-        function updateUIForLoggedInUser() {
-            document.getElementById('authButtons').classList.add('hidden');
-            document.getElementById('userDropdown').classList.remove('hidden');
-            document.getElementById('userName').textContent = currentUser.name;
-        }
-
-        function toggleDropdown() {
-            document.getElementById('dropdownMenu').classList.toggle('show');
-        }
-
-        window.onclick = function(event) {
-            if (!event.target.matches('.user-button')) {
-                const dropdown = document.getElementById('dropdownMenu');
-                if (dropdown.classList.contains('show')) {
-                    dropdown.classList.remove('show');
-                }
-            }
-        };
-
-        async function logout() {
-            if (!confirm('Are you sure you want to log out?')) return;
-
-            try {
-                const response = await fetch(`${API_BASE_URL}/auth/logout`, {
-                    method: 'POST',
-                    credentials: 'include'
-                });
-
-                const data = await response.json();
-                if (data.success) {
-                    window.location.href = 'index.html';
-                }
-            } catch (error) {
-                console.error('Logout error:', error);
-            }
-        }
-
-        async function loadPortfolios() {
-            try {
-                const clusterParam = currentCluster !== 'All' ? `?cluster=${currentCluster}` : '';
-                const response = await fetch(`${API_BASE_URL}/portfolios${clusterParam}`);
-                const data = await response.json();
-
-                const grid = document.getElementById('portfolioGrid');
-                grid.innerHTML = '';
-
-                // Add create portfolio card for members
-                if (currentUser && currentUser.userType === 'member') {
-                    grid.innerHTML += `
-                        <div class="create-portfolio-card" onclick="showCreateModal()">
-                            <div class="create-icon">➕</div>
-                            <h3>Create Portfolio</h3>
-                            <p>Showcase your creative works</p>
-                        </div>
-                    `;
-                }
-
-                // Add existing portfolios
-                if (data.portfolios && data.portfolios.length > 0) {
-                    data.portfolios.forEach(portfolio => {
-                        grid.innerHTML += createPortfolioCard(portfolio);
-                    });
-                } else if (!currentUser || currentUser.userType !== 'member') {
-                    grid.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📂</div><p>No portfolios found</p></div>';
-                }
-            } catch (error) {
-                console.error('Error loading portfolios:', error);
-                document.getElementById('portfolioGrid').innerHTML = '<div class="empty-state"><div class="empty-state-icon">❌</div><p>Error loading portfolios</p></div>';
-            }
-        }
-
-        function createPortfolioCard(portfolio) {
-            const userIcon = portfolio.userId?.cluster === 'Photography' ? '📷' : 
-                           portfolio.userId?.cluster === 'Graphics' ? '🎨' : '🎬';
+    async function checkAuth() {
+        try {
+            const response = await fetch(`${API_BASE_URL}/auth/verify`, {
+                credentials: 'include'
+            });
+            const data = await response.json();
             
-            return `
-                <div class="portfolio-card" onclick="viewPortfolio('${portfolio._id}')">
-                    <div class="portfolio-header">
-                        <div class="profile-photo">${userIcon}</div>
-                        <div class="portfolio-name">${portfolio.userId?.name || 'Unknown'}</div>
-                        <div class="portfolio-cluster">${portfolio.userId?.cluster || 'Member'}</div>
+            if (data.success) {
+                currentUser = data.user;
+                updateUIForLoggedInUser();
+            }
+        } catch (error) {
+            console.log('Not authenticated');
+        }
+    }
+
+    function updateUIForLoggedInUser() {
+        document.getElementById('authButtons').classList.add('hidden');
+        document.getElementById('userDropdown').classList.remove('hidden');
+        document.getElementById('userName').textContent = currentUser.name;
+    }
+
+    function toggleDropdown() {
+        document.getElementById('dropdownMenu').classList.toggle('show');
+    }
+
+    window.onclick = function(event) {
+        if (!event.target.matches('.user-button')) {
+            const dropdown = document.getElementById('dropdownMenu');
+            if (dropdown.classList.contains('show')) {
+                dropdown.classList.remove('show');
+            }
+        }
+    };
+
+    async function logout() {
+        if (!confirm('Are you sure you want to log out?')) return;
+        try {
+            const response = await fetch(`${API_BASE_URL}/auth/logout`, {
+                method: 'POST',
+                credentials: 'include'
+            });
+            const data = await response.json();
+            if (data.success) {
+                window.location.href = 'index.html';
+            }
+        } catch (error) {
+            console.error('Logout error:', error);
+        }
+    }
+
+    async function loadPortfolios() {
+        try {
+            const clusterParam = currentCluster !== 'All' ? `?cluster=${currentCluster}` : '';
+            const response = await fetch(`${API_BASE_URL}/portfolios${clusterParam}`);
+            const data = await response.json();
+
+            console.log('📂 Portfolios loaded:', data.count, 'portfolios');
+            console.log('📋 Full portfolio data:', data.portfolios);
+
+            const grid = document.getElementById('portfolioGrid');
+            grid.innerHTML = '';
+
+            // Add create portfolio card for members
+            if (currentUser && currentUser.userType === 'member') {
+                grid.innerHTML += `
+                    <div class="create-portfolio-card" onclick="showCreateModal()">
+                        <div class="create-icon">➕</div>
+                        <h3>Create Portfolio</h3>
+                        <p>Showcase your creative works</p>
                     </div>
-                    <div class="portfolio-body">
-                        <div class="portfolio-info">
-                            <div class="info-item">
-                                <div class="info-value">${portfolio.works?.length || 0}</div>
-                                <div class="info-label">Works</div>
-                            </div>
-                            <div class="info-item">
-                                <div class="info-value">${portfolio.totalVotes || 0}</div>
-                                <div class="info-label">Votes</div>
-                            </div>
+                `;
+            }
+
+            // Add existing portfolios
+            if (data.portfolios && data.portfolios.length > 0) {
+                data.portfolios.forEach(portfolio => {
+                    grid.innerHTML += createPortfolioCard(portfolio);
+                });
+            } else if (!currentUser || currentUser.userType !== 'member') {
+                grid.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📂</div><p>No portfolios found</p></div>';
+            }
+        } catch (error) {
+            console.error('❌ Error loading portfolios:', error);
+            document.getElementById('portfolioGrid').innerHTML = '<div class="empty-state"><div class="empty-state-icon">❌</div><p>Error loading portfolios</p></div>';
+        }
+    }
+
+    function createPortfolioCard(portfolio) {
+        if (!portfolio || !portfolio._id) {
+            console.error('❌ Portfolio missing _id:', portfolio);
+            return '';
+        }
+
+        const portfolioId = portfolio._id;
+        console.log('✅ Creating card with ID:', portfolioId);
+
+        // Safely access nester userId properties
+        const userId = portfolio.userId || {};
+        const userName = userId.name || 'Unknown';
+        const userCluster = userId.cluster || 'Member';
+
+        const userIcon = userCluster === 'Photography' ? '📷' : 
+                         userCluster === 'Graphics' ? '🎨' : '🎬';
+
+        //const userIcon = portfolio.userId?.cluster === 'Photography' ? '📷' : 
+                       //portfolio.userId?.cluster === 'Graphics' ? '🎨' : '🎬';
+        
+        return `
+            <div class="portfolio-card" onclick="viewPortfolio('${portfolioId}')">
+                <div class="portfolio-header">
+                    <div class="profile-photo">${userIcon}</div>
+                    <div class="portfolio-name">${userName}</div>
+                    <div class="portfolio-cluster">${userCluster}</div>
+                </div>
+                <div class="portfolio-body">
+                    <div class="portfolio-info">
+                        <div class="info-item">
+                            <div class="info-value">${portfolio.works?.length || 0}</div>
+                            <div class="info-label">Works</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-value">${portfolio.totalVotes || 0}</div>
+                            <div class="info-label">Votes</div>
                         </div>
                     </div>
                 </div>
-            `;
-        }
+            </div>
+        `;
+    }
 
-        function filterByCluster(cluster) {
-            currentCluster = cluster;
-            
-            document.querySelectorAll('.filter-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            event.target.classList.add('active');
-
-            loadPortfolios();
-        }
-
-        function showCreateModal() {
-            if (!currentUser) {
-                alert('Please log in to create a portfolio');
-                return;
-            }
-            if (currentUser.userType !== 'member') {
-                alert('Only members can create portfolios');
-                return;
-            }
-            document.getElementById('createPortfolioModal').classList.add('show');
-        }
-
-        function closeCreateModal() {
-            document.getElementById('createPortfolioModal').classList.remove('show');
-            document.getElementById('createPortfolioForm').reset();
-        }
-
-        document.getElementById('createPortfolioForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const portfolioData = {
-                title: document.getElementById('portfolioTitle').value,
-                bio: document.getElementById('portfolioBio').value,
-                socialMedia: document.getElementById('socialMedia').value
-            };
-
-            try {
-                const response = await fetch(`${API_BASE_URL}/portfolios`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    credentials: 'include',
-                    body: JSON.stringify(portfolioData)
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    alert('Portfolio created successfully!');
-                    closeCreateModal();
-                    loadPortfolios();
-                } else {
-                    alert(data.message || 'Failed to create portfolio');
-                }
-            } catch (error) {
-                console.error('Error creating portfolio:', error);
-                alert('Error creating portfolio. Please try again.');
-            }
+    function filterByCluster(cluster) {
+        currentCluster = cluster;
+        
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.classList.remove('active');
         });
+        event.target.classList.add('active');
 
-        function viewPortfolio(portfolioId) {
-            alert(`Viewing portfolio: ${portfolioId}\n\nThis would open the detailed portfolio page.`);
-            // TODO: Navigate to portfolio detail page
-            // window.location.href = `portfolio-detail.html?id=${portfolioId}`;
+        loadPortfolios();
+    }
+
+    function showCreateModal() {
+        if (!currentUser) {
+            alert('Please log in to create a portfolio');
+            return;
         }
-
-        function viewMyPortfolio() {
-            if (currentUser) {
-                alert(`View portfolio for: ${currentUser.name}\n\nThis would open your portfolio page.`);
-            }
+        if (currentUser.userType !== 'member') {
+            alert('Only members can create portfolios');
+            return;
         }
+        document.getElementById('createPortfolioModal').classList.add('show');
+    }
 
-        function setupSearch() {
-            const searchBar = document.getElementById('searchBar');
-            let searchTimeout;
+    function closeCreateModal() {
+        document.getElementById('createPortfolioModal').classList.remove('show');
+        document.getElementById('createPortfolioForm').reset();
+    }
 
-            searchBar.addEventListener('input', function() {
-                clearTimeout(searchTimeout);
-                searchTimeout = setTimeout(() => {
-                    const query = this.value.trim();
-                    if (query) {
-                        searchPortfolios(query);
-                    } else {
-                        loadPortfolios();
-                    }
-                }, 500);
+    document.getElementById('createPortfolioForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const portfolioData = {
+            title: document.getElementById('portfolioTitle').value,
+            bio: document.getElementById('portfolioBio').value,
+            socialMedia: document.getElementById('socialMedia').value
+        };
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/portfolios`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify(portfolioData)
             });
-        }
 
-        async function searchPortfolios(query) {
-            try {
-                const response = await fetch(`${API_BASE_URL}/portfolios?search=${encodeURIComponent(query)}`);
-                const data = await response.json();
+            const data = await response.json();
 
-                const grid = document.getElementById('portfolioGrid');
-                grid.innerHTML = '';
-
-                if (currentUser && currentUser.userType === 'member') {
-                    grid.innerHTML += `
-                        <div class="create-portfolio-card" onclick="showCreateModal()">
-                            <div class="create-icon">➕</div>
-                            <h3>Create Portfolio</h3>
-                            <p>Showcase your creative works</p>
-                        </div>
-                    `;
-                }
-
-                if (data.portfolios && data.portfolios.length > 0) {
-                    data.portfolios.forEach(portfolio => {
-                        grid.innerHTML += createPortfolioCard(portfolio);
-                    });
-                } else {
-                    grid.innerHTML += `<div class="empty-state"><div class="empty-state-icon">🔍</div><p>No portfolios found for "${query}"</p></div>`;
-                }
-            } catch (error) {
-                console.error('Error searching portfolios:', error);
+            if (data.success) {
+                alert('Portfolio created successfully!');
+                closeCreateModal();
+                loadPortfolios();
+            } else {
+                alert(data.message || 'Failed to create portfolio');
             }
+        } catch (error) {
+            console.error('Error creating portfolio:', error);
+            alert('Error creating portfolio. Please try again.');
         }
-    </script>
+    });
+
+    // Navigate to ANY portfolio detail page (user's own OR other portfolios)
+    function viewPortfolio(portfolioId) {
+        console.log('🔗 Navigating to portfolio:', portfolioId);
+        console.log('🔍 ID type:', typeof portfolioId);
+        console.log('🔍 ID value:', JSON.stringify(portfolioId));
+        
+        // Validate the portfolioId
+        if (!portfolioId || portfolioId === 'undefined' || portfolioId === 'null' || portfolioId.toString().trim() === '') {
+            console.error('❌ Invalid portfolio ID:', portfolioId);
+            alert('Invalid portfolio ID');
+            return;
+        }
+
+        const cleanId = portfolioId.toString().trim();
+        console.log('✅ Navigating to portfolio:', cleanId);
+        console.log('🌐 Full URL:', `portfolio_detail.html?id=${cleanId}`);
+        
+        window.location.href = `portfolio_detail.html?id=${cleanId}`;
+    }
+
+    // View current user's OWN portfolio
+    async function viewMyPortfolio() {
+        console.log('👤 viewMyPortfolio called');
+        
+        if (!currentUser) {
+            alert('Please log in first');
+            return;
+        }
+
+        if (currentUser.userType !== 'member') {
+            alert('Only members can have portfolios');
+            return;
+        }
+
+        console.log('🔍 Fetching portfolio for user:', currentUser._id);
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/portfolios/user/${currentUser._id}`, {
+                credentials: 'include'
+            });
+            const data = await response.json();
+            
+            console.log('📊 Portfolio fetch result:', data);
+
+            if (data.success && data.portfolio) {
+                console.log('✅ Redirecting to portfolio:', data.portfolio._id);
+                window.location.href = `portfolio_detail.html?id=${data.portfolio._id}`;
+            } else {
+                console.log('📝 No portfolio found, offering to create one');
+                if (confirm('You do not have a portfolio yet. Would you like to create one now?')) {
+                    showCreateModal();
+                }
+            }
+        } catch (error) {
+            console.error('❌ Error fetching portfolio:', error);
+            alert('Error checking your portfolio. Please try again.');
+        }
+    }
+
+    function setupSearch() {
+        const searchBar = document.getElementById('searchBar');
+        let searchTimeout;
+
+        searchBar.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                const query = this.value.trim();
+                if (query) {
+                    searchPortfolios(query);
+                } else {
+                    loadPortfolios();
+                }
+            }, 500);
+        });
+    }
+
+    async function searchPortfolios(query) {
+        try {
+            const response = await fetch(`${API_BASE_URL}/portfolios?search=${encodeURIComponent(query)}`);
+            const data = await response.json();
+
+            const grid = document.getElementById('portfolioGrid');
+            grid.innerHTML = '';
+
+            if (currentUser && currentUser.userType === 'member') {
+                grid.innerHTML += `
+                    <div class="create-portfolio-card" onclick="showCreateModal()">
+                        <div class="create-icon">➕</div>
+                        <h3>Create Portfolio</h3>
+                        <p>Showcase your creative works</p>
+                    </div>
+                `;
+            }
+
+            if (data.portfolios && data.portfolios.length > 0) {
+                data.portfolios.forEach(portfolio => {
+                    grid.innerHTML += createPortfolioCard(portfolio);
+                });
+            } else {
+                grid.innerHTML += `<div class="empty-state"><div class="empty-state-icon">🔍</div><p>No portfolios found for "${query}"</p></div>`;
+            }
+        } catch (error) {
+            console.error('Error searching portfolios:', error);
+        }
+    }
+</script>
 </body>
 </html>

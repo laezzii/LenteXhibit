@@ -5,6 +5,7 @@
 
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose');
 const { Work, Portfolio, User } = require('../models');
 const { isAuthenticated, isAdmin } = require('./auth');
 
@@ -75,6 +76,14 @@ router.get('/', async (req, res) => {
 // Get Work by ID
 router.get('/:id', async (req, res) => {
     try {
+        // Validate portfolio ID format
+        if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid work ID format'
+            });
+        }
+
         const work = await Work.findById(req.params.id)
             .populate('userId', 'name email cluster position batchName')
             .populate('themeId', 'title description startDate endDate');
@@ -134,6 +143,8 @@ router.post('/', isAuthenticated, async (req, res) => {
     try {
         const { title, description, category, fileUrl, themeId } = req.body;
 
+        console.log('Creating work for user:', req.session.userId);
+
         // Validate required fields
         if (!title || !description || !category || !fileUrl) {
             return res.status(400).json({
@@ -170,19 +181,28 @@ router.post('/', isAuthenticated, async (req, res) => {
         });
 
         await newWork.save();
+        console.log('Work created:', newWork._id);
 
         // Add to user's portfolio
         let portfolio = await Portfolio.findOne({ userId: req.session.userId });
         if (!portfolio) {
+            console.log('Creating new portfolio for user:');
             portfolio = new Portfolio({
                 userId: req.session.userId,
                 title: `${user.name}'s Portfolio`,
+                bio: '',
                 works: [newWork._id]
             });
+            await portfolio.save();
+            console.log('Portfolio created:', portfolio._id);
         } else {
-            portfolio.works.push(newWork._id);
+            // Add work to existing portfolio
+            if (!portfolio.works.includes(newWork._id)) {
+                portfolio.works.push(newWork._id);
+                await portfolio.save();
+                console.log('Work added to existing portfolio');
+            }
         }
-        await portfolio.save();
 
         // Populate before sending response
         await newWork.populate('userId', 'name email cluster');
@@ -190,7 +210,8 @@ router.post('/', isAuthenticated, async (req, res) => {
         res.status(201).json({
             success: true,
             message: 'Work uploaded successfully',
-            work: newWork
+            work: newWork,
+            portfolioId: portfolio._id
         });
 
     } catch (error) {
@@ -206,6 +227,13 @@ router.post('/', isAuthenticated, async (req, res) => {
 // Update Work (Owner or Admin)
 router.put('/:id', isAuthenticated, async (req, res) => {
     try {
+        if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid work ID format'
+            });
+        }
+
         const work = await Work.findById(req.params.id);
         
         if (!work) {
@@ -232,7 +260,9 @@ router.put('/:id', isAuthenticated, async (req, res) => {
         
         if (title) work.title = title;
         if (description) work.description = description;
-        if (category) work.category = category;
+        if (category && ['Photos', 'Graphics', 'Videos'].includes(category)) {
+            work.category = category;
+        }
         if (fileUrl) work.fileUrl = fileUrl;
         
         // Only admin can set featured
@@ -240,6 +270,7 @@ router.put('/:id', isAuthenticated, async (req, res) => {
             work.featured = featured;
         }
 
+        work.updatedAt = Date.now();
         await work.save();
         await work.populate('userId', 'name email cluster');
 
@@ -262,6 +293,13 @@ router.put('/:id', isAuthenticated, async (req, res) => {
 // Delete Work (Owner or Admin)
 router.delete('/:id', isAuthenticated, async (req, res) => {
     try {
+        if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid work ID format'
+            });
+        }
+
         const work = await Work.findById(req.params.id);
         
         if (!work) {
@@ -291,6 +329,8 @@ router.delete('/:id', isAuthenticated, async (req, res) => {
 
         await Work.findByIdAndDelete(req.params.id);
 
+        console.log('Work deleted:', req.params.id);
+
         res.json({
             success: true,
             message: 'Work deleted successfully'
@@ -309,6 +349,13 @@ router.delete('/:id', isAuthenticated, async (req, res) => {
 // Admin: Toggle Featured Status
 router.patch('/:id/featured', isAuthenticated, isAdmin, async (req, res) => {
     try {
+        if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid work ID format'
+            });
+        }
+
         const work = await Work.findById(req.params.id);
         
         if (!work) {

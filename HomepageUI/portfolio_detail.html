@@ -655,17 +655,38 @@
         let currentCategory = 'All';
 
         // Get portfolio ID from URL
-        const urlParams = new URLSearchParams(window.location.search);
-        const portfolioId = urlParams.get('id');
+        function getPortfolioIdFromUrl(){
+            const urlParams = new URLSearchParams(window.location.search);
+            const id = urlParams.get('id');
+
+            console.log('🔍 URL Search Params:', window.location.search);
+            console.log('🆔 Extracted Portfolio ID:', id);
+
+            // Validate the ID
+            if (!id || id === 'undefined' || id === 'null' || id.trim() === '') {
+                console.error('❌ Invalid portfolio ID from URL');
+                return null;
+            }
+            return id.trim();
+        }
+
+        const portfolioId = getPortfolioIdFromUrl();
 
         window.onload = async function() {
-            await checkAuth();
-            if (portfolioId) {
-                await loadPortfolio();
-            } else {
-                alert('No portfolio ID provided');
-                window.location.href = 'portfolio.html';
+            console.log('🌐 Page loaded, Portfolio ID:', portfolioId);
+
+            // Check if we have a valid portfolio ID
+            if (!portfolioId) {
+                console.error('❌ No valid portfolio ID provided in URL');
+                alert('No portfolio ID provided. Redirecting to portfolios page...');
+                setTimeout(() => {
+                    window.location.href = 'portfolio.html';
+                }, 1500);
+                return
             }
+
+            await checkAuth();
+            await loadPortfolio();
         };
 
         async function checkAuth() {
@@ -745,13 +766,21 @@
         }
 
         function displayPortfolio(portfolio) {
-            const clusterIcon = portfolio.userId.cluster === 'Photography' ? '📷' : 
-                              portfolio.userId.cluster === 'Graphics' ? '🎨' : '🎬';
+            // Safely access nested properties
+            const userId = portfolio.userId || {};
+            const cluster = userId.cluster || 'UP Lente';
+            const position = userId.position || 'Member';
+            const name = userId.name || 'Unknown';
+
+            const clusterIcon = cluster === 'Photography' ? '📷' : 
+                                cluster === 'Graphics' ? '🎨' : '🎬';
+
+            //const clusterIcon = portfolio.userId.cluster === 'Photography' ? '📷' : 
+                              //portfolio.userId.cluster === 'Graphics' ? '🎨' : '🎬';
             
             document.getElementById('profileIcon').textContent = clusterIcon;
-            document.getElementById('portfolioTitle').textContent = portfolio.title || portfolio.userId.name;
-            document.getElementById('portfolioSubtitle').textContent = 
-                `${portfolio.userId.position || 'Member'} • ${portfolio.userId.cluster || 'UP Lente'}`;
+            document.getElementById('portfolioTitle').textContent = portfolio.title || name;
+            document.getElementById('portfolioSubtitle').textContent = `${position} • ${cluster}`;
             document.getElementById('portfolioBio').textContent = portfolio.bio || 'No bio provided yet.';
 
             // Update stats
@@ -915,11 +944,43 @@
             // TODO: Navigate to work detail page
         }
 
-        function viewMyPortfolio() {
-            if (currentUser) {
-                alert(`View portfolio for: ${currentUser.name}\n\nThis would open your portfolio page.`);
+        async function viewMyPortfolio() {
+            console.log('👤 viewMyPortfolio called');
+    
+            if (!currentUser) {
+                alert('Please log in first');
+                return;
             }
+
+            if (currentUser.userType !== 'member') {
+                alert('Only members can have portfolios');
+                return;
+            }
+
+            console.log('🔍 Fetching portfolio for user:', currentUser._id);
+
+            try {
+            const response = await fetch(`${API_BASE_URL}/portfolios/user/${currentUser._id}`, {
+                credentials: 'include'
+            });
+            const data = await response.json();
+        
+            console.log('📊 Portfolio fetch result:', data);
+
+            if (data.success && data.portfolio) {
+                console.log('✅ Redirecting to portfolio:', data.portfolio._id);
+                window.location.href = `portfolio_detail.html?id=${data.portfolio._id}`;
+            } else {
+                console.log('📝 No portfolio found, offering to create one');
+                if (confirm('You do not have a portfolio yet. Would you like to create one now?')) {
+                    window.location.href = 'portfolio.html';
+                }
+            }
+        } catch (error) {
+            console.error('❌ Error fetching portfolio:', error);
+            alert('Error checking your portfolio. Please try again.');
         }
+    }
     </script>
 </body>
 </html>
