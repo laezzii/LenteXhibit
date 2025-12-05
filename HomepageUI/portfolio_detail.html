@@ -682,25 +682,6 @@
             return cleanId;
         }
 
-        /*const portfolioId = getPortfolioIdFromUrl();
-
-        window.onload = async function() {
-            console.log('🌐 Page loaded, Portfolio ID:', portfolioId);
-
-            // Check if we have a valid portfolio ID
-            if (!portfolioId) {
-                console.error('❌ No valid portfolio ID provided in URL');
-                alert('No portfolio ID provided. Redirecting to portfolios page...');
-                setTimeout(() => {
-                    window.location.href = 'portfolio.html';
-                }, 1500);
-                return
-            }
-
-            await checkAuth();
-            await loadPortfolio();
-        };*/
-
         async function checkAuth() {
             try {
                 const response = await fetch(`${API_BASE_URL}/auth/verify`, {
@@ -814,9 +795,6 @@
             const clusterIcon = cluster === 'Photography' ? '📷' : 
                                 cluster === 'Graphics' ? '🎨' : '🎬';
 
-            //const clusterIcon = portfolio.userId.cluster === 'Photography' ? '📷' : 
-                              //portfolio.userId.cluster === 'Graphics' ? '🎨' : '🎬';
-            
             document.getElementById('profileIcon').textContent = clusterIcon;
             document.getElementById('portfolioTitle').textContent = portfolio.title || name;
             document.getElementById('portfolioSubtitle').textContent = `${position} • ${cluster}`;
