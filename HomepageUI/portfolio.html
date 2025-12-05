@@ -637,7 +637,7 @@
             const data = await response.json();
 
             console.log('📂 Portfolios loaded:', data.count, 'portfolios');
-            console.log('📋 Full portfolio data:', data.portfolios);
+            console.log('📋 Full portfolio data:', JSON.stringify(data.portfolios, null, 2));
 
             const grid = document.getElementById('portfolioGrid');
             grid.innerHTML = '';
@@ -653,28 +653,49 @@
                 `;
             }
 
-            // Add existing portfolios
+            // Validate and add existing portfolios
             if (data.portfolios && data.portfolios.length > 0) {
-                data.portfolios.forEach(portfolio => {
-                    grid.innerHTML += createPortfolioCard(portfolio);
+                data.portfolios.forEach((portfolio, index) => {
+                    console.log(`📌 Processing portfolio ${index + 1}:`, {
+                        _id: portfolio._id,
+                        id: portfolio.id,
+                        hasUserId: !!portfolio.userId,
+                        userName: portfolio.userId?.name
+                    });
+                
+                    const cardHtml = createPortfolioCard(portfolio);
+                    if (cardHtml) {
+                        grid.innerHTML += cardHtml;
+                    } else {
+                        console.warn('⚠️ Skipped portfolio due to missing data:', portfolio);
+                    }
                 });
             } else if (!currentUser || currentUser.userType !== 'member') {
                 grid.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📂</div><p>No portfolios found</p></div>';
             }
         } catch (error) {
             console.error('❌ Error loading portfolios:', error);
-            document.getElementById('portfolioGrid').innerHTML = '<div class="empty-state"><div class="empty-state-icon">❌</div><p>Error loading portfolios</p></div>';
-        }
+            console.error('Error stack:', error.stack);
+            document.getElementById('portfolioGrid').innerHTML = 
+                '<div class="empty-state"><div class="empty-state-icon">❌</div><p>Error loading portfolios. Please refresh the page.</p></div>';
+        }   
     }
 
     function createPortfolioCard(portfolio) {
-        if (!portfolio || !portfolio._id) {
-            console.error('❌ Portfolio missing _id:', portfolio);
+        let portfolioId;
+
+        // Try multiple ways to get the portfolio ID
+        if (portfolio._id) {
+            portfolioId = portfolio._id.toString();
+        } else if (portfolio.id) {
+            portfolioId = portfolio.id.toString();
+        } else {
+            console.error('Portfolio missing ID:', portfolio);
             return '';
         }
 
-        const portfolioId = portfolio._id;
-        console.log('✅ Creating card with ID:', portfolioId);
+        console.log('Creating card for portfolio ID:', portfolioId);
+        console.log('Full portfolio object:', JSON.stringify(portfolio, null, 2));
 
         // Safely access nester userId properties
         const userId = portfolio.userId || {};
@@ -683,9 +704,6 @@
 
         const userIcon = userCluster === 'Photography' ? '📷' : 
                          userCluster === 'Graphics' ? '🎨' : '🎬';
-
-        //const userIcon = portfolio.userId?.cluster === 'Photography' ? '📷' : 
-                       //portfolio.userId?.cluster === 'Graphics' ? '🎨' : '🎬';
         
         return `
             <div class="portfolio-card" onclick="viewPortfolio('${portfolioId}')">
@@ -707,7 +725,8 @@
                     </div>
                 </div>
             </div>
-        `;
+        </div>
+    `;
     }
 
     function filterByCluster(cluster) {
@@ -777,13 +796,22 @@
         console.log('🔍 ID value:', JSON.stringify(portfolioId));
         
         // Validate the portfolioId
-        if (!portfolioId || portfolioId === 'undefined' || portfolioId === 'null' || portfolioId.toString().trim() === '') {
+        if (!portfolioId || portfolioId === 'undefined' || portfolioId === 'null' || portfolioId.toString().trim() === '' || portfolioId === '[object Object]') {
             console.error('❌ Invalid portfolio ID:', portfolioId);
             alert('Invalid portfolio ID');
             return;
         }
 
+        // Clean and validate the ID
         const cleanId = portfolioId.toString().trim();
+
+        // Check if it looks like a valid MongoDB ObjectId (24 hex characters)
+        if (!/^[a-f\d]{24}$/i.test(cleanId)) {
+            console.error('ID does not match MongoDB ObjectId format:', cleanId);
+            alert('Invalid portfolio ID format');
+            return;
+        }
+        
         console.log('✅ Navigating to portfolio:', cleanId);
         console.log('🌐 Full URL:', `portfolio_detail.html?id=${cleanId}`);
         

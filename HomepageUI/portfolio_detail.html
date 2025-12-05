@@ -661,16 +661,28 @@
 
             console.log('🔍 URL Search Params:', window.location.search);
             console.log('🆔 Extracted Portfolio ID:', id);
+            console.log('ID type:', typeof id);
 
             // Validate the ID
             if (!id || id === 'undefined' || id === 'null' || id.trim() === '') {
                 console.error('❌ Invalid portfolio ID from URL');
                 return null;
             }
-            return id.trim();
+            const cleanId = id.trim();
+
+            // Validate MongoDB ObjectId format (24 hex characters)
+            if (!/^[a-f\d]{24}$/i.test(cleanId)) {
+                console.error('❌ ID does not match MongoDB ObjectId format:', cleanId);
+                console.error('Expected: 24 hexadecimal characters');
+                console.error('Got:', cleanId, 'Length:', cleanId.length);
+                return null;
+            }
+
+            console.log('✅ Valid portfolio ID extracted:', cleanId);
+            return cleanId;
         }
 
-        const portfolioId = getPortfolioIdFromUrl();
+        /*const portfolioId = getPortfolioIdFromUrl();
 
         window.onload = async function() {
             console.log('🌐 Page loaded, Portfolio ID:', portfolioId);
@@ -687,7 +699,7 @@
 
             await checkAuth();
             await loadPortfolio();
-        };
+        };*/
 
         async function checkAuth() {
             try {
@@ -741,27 +753,54 @@
         }
 
         async function loadPortfolio() {
-            try {
-                const response = await fetch(`${API_BASE_URL}/portfolios/${portfolioId}`);
-                const data = await response.json();
+            console.log('🔄 Loading portfolio data for ID:', portfolioId);
 
-                if (data.success) {
+            if (!portfolioId) {
+                console.error('No portfolio ID available');
+                alert('Invalid portfolio ID. Redirecting to portfolios page...');
+                setTimeout(() => window.location.href = 'portfolio.html', 1500);
+                return;
+            }
+
+            try {
+                console.log('Fetching portfolio from:', `${API_BASE_URL}/portfolios/${portfolioId}`);
+        
+                const response = await fetch(`${API_BASE_URL}/portfolios/${portfolioId}`);
+                console.log('Response status:', response.status);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log('Response data:', JSON.stringify(data, null, 2));
+
+                if (data.success && data.portfolio) {
                     portfolio = data.portfolio;
+                    console.log('Portfolio loaded successfully:', portfolio._id);
+
                     displayPortfolio(portfolio);
                     loadWorks(portfolio.works || []);
 
                     // Show edit button if this is the user's own portfolio
-                    if (currentUser && currentUser._id === portfolio.userId._id) {
+                    if (currentUser && portfolio.userId && currentUser._id === portfolio.userId._id) {
+                        console.log('User owns this portfolio - showing edit buttons');
                         document.getElementById('editBtn').classList.remove('hidden');
                         document.getElementById('addWorkBtn').classList.remove('hidden');
                     }
                 } else {
+                    console.error('Portfolio not found in response', data);
                     alert('Portfolio not found');
                     window.location.href = 'portfolio.html';
                 }
             } catch (error) {
                 console.error('Error loading portfolio:', error);
-                alert('Error loading portfolio');
+                console.error('Error details:', {
+                    message: error.message,
+                    stack: error.stack,
+                    portfolioId: portfolioId
+                });
+                alert('Error loading portfolio. Please try again later.');
             }
         }
 

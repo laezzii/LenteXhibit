@@ -121,8 +121,6 @@ router.get('/user/:userId', async (req, res) => {
 // Get Portfolio by ID
 router.get('/:id', async (req, res) => {
     try {
-        console.log('Fetching portfolio by ID:', req.params.id);
-
         // Validate portfolio ID format
         if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
             console.log('Invalid portfolio ID format', req.params);
@@ -133,33 +131,21 @@ router.get('/:id', async (req, res) => {
         }
 
         const portfolio = await Portfolio.findById(req.params.id)
-            .populate({
-                path: 'userId',
-                select: 'name email cluster position batchName'
-            })
+            .populate('userId','name email cluster position batchName')
             .populate({
                 path: 'works',
-                populate: {
-                    path: 'userId',
-                    select: 'name'
-                }
-            });
+                populate: { path: 'userId', select: 'name'}
+            })
+            .lean(); // Use lean() for better performance
 
         if (!portfolio) {
-            console.log('Portfolio not found:', req.params.id);
             return res.status(404).json({
                 success: false,
                 message: 'Portfolio not found'
             });
         }
 
-        console.log('Portfolio found:', portfolio._id.toString());
-        console.log('Works count:', portfolio.works ? portfolio.works.length : 0);
-
-        res.json({
-            success: true,
-            portfolio
-        });
+        res.json({ success: true, portfolio});
 
     } catch (error) {
         console.error('Error fetching portfolio:', error);
@@ -234,7 +220,7 @@ router.post('/', isAuthenticated, async (req, res) => {
 router.put('/:id', isAuthenticated, async (req, res) => {
     try {
         // Validate portfolio ID format
-        if (!mongoose.TypesObjectId.isValid(req.params.id)) {
+        if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
             return res.status(400).json({
                 success: false,
                 message: 'Invalid portfolio ID format'
