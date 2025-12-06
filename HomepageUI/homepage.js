@@ -6,8 +6,14 @@
 
 // API Configuration
 /** Base URL for backend API calls. Update if backend URL changes. */
-const API_BASE_URL = 'http://localhost:5000/api';
+const PRODUCTION_API_URL = 'https://lentexhibit.onrender.com/api';
+const DEVELOPMENT_API = 'http://localhost:5000/api';
 
+const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? DEVELOPMENT_API
+    : PRODUCTION_API_URL;
+
+console.log('Using API:', API_BASE_URL);
 /** Currently authenticated user object (null when not authenticated). */
 let currentUser = null;
 
