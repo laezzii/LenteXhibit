@@ -33,7 +33,8 @@ const corsOptions = {
             process.env.FRONTEND_URL,
             'http://localhost:3000',
             'http://localhost:5500',
-            'http://127.0.0.1:5500'
+            'http://127.0.0.1:5500',
+            'https://jocular-cactus-4f197c.netlify.app'
         ].filter(Boolean); // Remove undefined/null values
 
         if (allowedOrigins.indexOf(origin) !== -1) {
