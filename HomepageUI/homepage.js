@@ -283,7 +283,7 @@ async function loadWorks() {
             grid.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📦</div><p>No works found</p></div>';
         }
     } catch (error) {
-        console.error('Error loading works:', error);
+        //console.error('Error loading works:', error);
     }
 }
 

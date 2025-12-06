@@ -1,5 +1,5 @@
 /**
- * LenteXhibit Backend Server
+ * LenteXhibit Backend Server - Production Ready
  * Main entry point for the backend server application.
  */
 
@@ -17,46 +17,115 @@ const workRoutes = require('./routes/works');
 const portfolioRoutes = require('./routes/portfolios');
 const themeRoutes = require('./routes/themes');
 const voteRoutes = require('./routes/votes');
-// Removed accidental React import — backend shouldn't require React
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Middleware
-app.use(cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
-    credentials: true
-}));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
-// Session configuration
-app.use(session({
-    secret: process.env.SESSION_SECRET || 'lentexhibit-secret-key-change-in-production',
+// MIDDLEWARE CONFIGURATION
+// CORS Configuration - Production Ready
+const corsOptions = {
+    origin: function (origin, callback) {
+        // Allow requests with no origin (like mobile apps or curl requests)
+        if (!origin) return callback(null, true);
+        
+        const allowedOrigins = [
+            process.env.FRONTEND_URL,
+            'http://localhost:3000',
+            'http://localhost:5500',
+            'http://127.0.0.1:5500'
+        ].filter(Boolean); // Remove undefined/null values
+
+        if (allowedOrigins.indexOf(origin) !== -1) {
+            callback(null, true);
+        } else {
+            console.warn(`🚫 CORS blocked origin: ${origin}`);
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    exposedHeaders: ['set-cookie']
+};
+
+app.use(cors(corsOptions));
+
+// Body parsing middleware
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Session configuration - Production Ready
+const sessionConfig = {
+    secret: process.env.SESSION_SECRET || 'your-super-secret-session-key-change-this-in-production',
     resave: false,
     saveUninitialized: false,
     store: MongoStore.create({
-        mongoUrl: process.env.MONGODB_URI || 'mongodb://localhost:27017/lentexhibit',
-        touchAfter: 24 * 3600 // lazy session update
+        mongoUrl: process.env.MONGODB_URI || 'mongodb+srv://lentexhibit_db:lentexhibit_pass@lentexhibit.da4auec.mongodb.net/lentexhibit',
+        touchAfter: 24 * 3600, // lazy session update (24 hours)
+        crypto: {
+            secret: process.env.SESSION_SECRET || 'your-super-secret-session-key-change-this-in-production'
+        }
     }),
     cookie: {
         maxAge: 1000 * 60 * 60 * 24 * 7, // 1 week
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
+        secure: process.env.NODE_ENV === 'production', // HTTPS only in production
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+        domain: process.env.NODE_ENV === 'production' ? undefined : 'localhost'
+    },
+    name: 'lentexhibit.sid' // Custom session cookie name
+};
+
+// Trust proxy if behind a reverse proxy (required for Render, Heroku, etc.)
+if (process.env.NODE_ENV === 'production') {
+    app.set('trust proxy', 1);
+}
+
+app.use(session(sessionConfig));
+
+
+// DATABASE CONNECTION
+const connectDB = async () => {
+    try {
+        const mongoOptions = {
+            useNewUrlParser: true,
+            useUnifiedTopology: true,
+            serverSelectionTimeoutMS: 5000,
+            socketTimeoutMS: 45000,
+        };
+
+        await mongoose.connect(
+            process.env.MONGODB_URI || 'mongodb+srv://lentexhibit_db:lentexhibit_pass@lentexhibit.da4auec.mongodb.net/lentexhibit',
+            mongoOptions
+        );
+
+        console.log('✅ MongoDB connected successfully');
+        console.log(`📦 Database: ${mongoose.connection.db.databaseName}`);
+        console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
+    } catch (err) {
+        console.error('❌ MongoDB connection error:', err);
+        console.error('💡 Check your MONGODB_URI in .env file');
+        process.exit(1); // Exit if cannot connect to database
     }
-}));
+};
 
-// Connect to MongoDB
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/lentexhibit', {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-})
-.then(() => console.log('✅ MongoDB connected successfully'))
-.catch(err => console.error('❌ MongoDB connection error:', err)
-)
+connectDB();
 
-// Routes
+// MongoDB connection event handlers
+mongoose.connection.on('error', (err) => {
+    console.error('❌ MongoDB error:', err);
+});
+
+mongoose.connection.on('disconnected', () => {
+    console.warn('⚠️ MongoDB disconnected. Attempting to reconnect...');
+});
+
+mongoose.connection.on('reconnected', () => {
+    console.log('✅ MongoDB reconnected');
+});
+
+// ROUTES
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/works', workRoutes);
@@ -64,37 +133,95 @@ app.use('/api/portfolios', portfolioRoutes);
 app.use('/api/themes', themeRoutes);
 app.use('/api/votes', voteRoutes);
 
+// HEALTH CHECK & ROOT ENDPOINT
+// Root endpoint
+app.get('/', (req, res) => {
+    res.json({
+        success: true,
+        message: 'LenteXhibit API Server',
+        version: '1.0.0',
+        status: 'running',
+        environment: process.env.NODE_ENV || 'development',
+        endpoints: {
+            auth: '/api/auth',
+            users: '/api/users',
+            works: '/api/works',
+            portfolios: '/api/portfolios',
+            themes: '/api/themes',
+            votes: '/api/votes',
+            health: '/api/health'
+        }
+    });
+});
+
 // Health check endpoint
 app.get('/api/health', (req, res) => {
-    res.json ({
+    const healthcheck = {
         status: 'ok',
-        message: 'LenteXhibit API is running',
-        timestamp: new Date().toISOString()
-    });
+        uptime: process.uptime(),
+        timestamp: new Date().toISOString(),
+        database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
+        environment: process.env.NODE_ENV || 'development'
+    };
+
+    try {
+        res.json(healthcheck);
+    } catch (err) {
+        healthcheck.status = 'error';
+        healthcheck.error = err.message;
+        res.status(503).json(healthcheck);
+    }
 });
 
-// Error handling middleware
-app.use((err, req, res, next) => {
-    console.error('Error:', err);
-    res.status(err.status || 500).json({
-        success: false,
-        message: err.message || 'Internal Server Error',
-        error: process.env.NODE_ENV === 'development' ? err : {}
-    });
-});
 
+// ERROR HANDLING MIDDLEWARE
 // 404 Handler
 app.use((req, res) => {
     res.status(404).json({
         success: false,
-        message: 'Route not found'
+        message: 'Route not found',
+        path: req.originalUrl,
+        method: req.method
     });
 });
 
-// Start the server
-app.listen(PORT, () => {
+// Global Error Handler
+app.use((err, req, res, next) => {
+    console.error('❌ Error:', err);
+
+    // Don't leak error details in production
+    const errorResponse = {
+        success: false,
+        message: err.message || 'Internal Server Error'
+    };
+
+    // Include stack trace only in development
+    if (process.env.NODE_ENV === 'development') {
+        errorResponse.error = err;
+        errorResponse.stack = err.stack;
+    }
+
+    res.status(err.status || 500).json(errorResponse);
+});
+
+// START SERVER
+const server = app.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT}`);
     console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`📡 Frontend URL: ${process.env.FRONTEND_URL || 'Not configured'}`);
+    console.log(`🔗 Local: http://localhost:${PORT}`);
+});
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+    console.log('👋 SIGTERM signal received: closing HTTP server');
+    server.close(() => {
+        console.log('🔴 HTTP server closed');
+        mongoose.connection.close(false, () => {
+            console.log('🔴 MongoDB connection closed');
+            process.exit(0);
+        });
+    });
 });
 
 module.exports = app;
