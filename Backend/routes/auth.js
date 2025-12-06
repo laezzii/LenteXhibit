@@ -1,5 +1,5 @@
 /**
- * Authentication Routes - FULLY FIXED
+ * Authentication Routes
  * Handles signup, login, logout, and session verification.
  */
 
@@ -39,12 +39,10 @@ const isAdmin = async (req, res, next) => {
     }
 };
 
-// Sign up - FIXED with explicit session save
+// Sign up
 router.post('/signup', async (req, res) => {
     try {
         const {name, email, userType, batchName, cluster, position} = req.body;
-
-        console.log('📝 Signup attempt:', { email, userType });
 
         // Validate required fields
         if (!name || !email || !userType) {
@@ -57,7 +55,6 @@ router.post('/signup', async (req, res) => {
         // Check if user already exists
         const existingUser = await User.findOne({email});
         if (existingUser) {
-            console.log('⚠️ User already exists:', email);
             return res.status(409).json({
                 success: false,
                 message: 'User with this email already exists'
@@ -73,6 +70,7 @@ router.post('/signup', async (req, res) => {
         }
 
         // Create new user
+        // Auto-approve members and guests for now (no admin approval required)
         const userData = {
             name,
             email,
@@ -90,36 +88,10 @@ router.post('/signup', async (req, res) => {
         const newUser = new User(userData);
         await newUser.save();
 
-        console.log('✅ User created:', newUser._id);
-
-        // Auto-login guests and members
+        // Auto-login guests and members (no admin approval required)
         if (userType === 'guest' || userType === 'member') {
             req.session.userId = newUser._id;
             req.session.userType = newUser.userType;
-
-            console.log('💾 Saving session for new user:', newUser._id);
-
-            // Save session explicitly before responding
-            try {
-                await new Promise((resolve, reject) => {
-                    req.session.save((err) => {
-                        if (err) {
-                            console.error('❌ Session save error:', err);
-                            reject(err);
-                        } else {
-                            console.log('✅ Session saved successfully');
-                            resolve();
-                        }
-                    });
-                });
-            } catch (sessionError) {
-                console.error('❌ Failed to save session:', sessionError);
-                return res.status(500).json({
-                    success: false,
-                    message: 'Account created but failed to log in automatically',
-                    error: sessionError.message
-                });
-            }
 
             return res.json({
                 success: true,
@@ -134,7 +106,7 @@ router.post('/signup', async (req, res) => {
             });
         }
 
-        // For other types
+        // For any other types (e.g., admin), return created info
         res.json({
             success: true,
             message: 'Account created',
@@ -147,8 +119,7 @@ router.post('/signup', async (req, res) => {
             }
         });
     } catch (error) {
-        console.error('❌ Signup error:', error);
-        console.error('Error stack:', error.stack);
+        console.error('Signup error:', error);
         res.status(500).json({
             success: false,
             message: 'Error during signup',
@@ -157,12 +128,10 @@ router.post('/signup', async (req, res) => {
     }
 });
 
-// Log In - FIXED with proper error handling
+// Log In
 router.post('/login', async (req, res) => {
     try {
         const {email} = req.body;
-
-        console.log('🔐 Login attempt for:', email);
 
         if (!email) {
             return res.status(400).json({
@@ -173,9 +142,6 @@ router.post('/login', async (req, res) => {
 
         // Find user by email
         const user = await User.findOne({email});
-        
-        console.log('👤 User found:', user ? user._id : 'null');
-        
         if (!user) {
             return res.status(404).json({
                 success: false,
@@ -195,53 +161,22 @@ router.post('/login', async (req, res) => {
         req.session.userId = user._id;
         req.session.userType = user.userType;
 
-        console.log('💾 Saving session for user:', user._id);
-
-        // Save session explicitly before responding
-        try {
-            await new Promise((resolve, reject) => {
-                req.session.save((err) => {
-                    if (err) {
-                        console.error('❌ Session save error:', err);
-                        reject(err);
-                    } else {
-                        console.log('✅ Session saved successfully for user:', user._id);
-                        resolve();
-                    }
-                });
-            });
-        } catch (sessionError) {
-            console.error('❌ Failed to save session:', sessionError);
-            return res.status(500).json({
-                success: false,
-                message: 'Failed to create session',
-                error: sessionError.message
-            });
-        }
-
-        // Build response user object safely
-        const responseUser = {
-            _id: user._id,
-            name: user.name,
-            email: user.email,
-            userType: user.userType
-        };
-
-        // Add optional fields only if they exist
-        if (user.cluster) responseUser.cluster = user.cluster;
-        if (user.batchName) responseUser.batchName = user.batchName;
-        if (user.position) responseUser.position = user.position;
-
-        console.log('✅ Login successful for:', user.email);
-
         res.json({
             success: true,
             message: 'Login successful',
-            user: responseUser
+
+            user: {
+                _id: user._id,
+                name: user.name,
+                email: user.email,
+                userType: user.userType,
+                cluster: user.cluster,
+                batchName: user.batchName,
+                position: user.position
+            }
         });
     } catch (error) {
-        console.error('❌ Login error:', error);
-        console.error('Error stack:', error.stack);
+        console.error('Login error:', error);
         res.status(500).json({
             success: false,
             message: 'Error during login',
@@ -253,8 +188,6 @@ router.post('/login', async (req, res) => {
 // Verify Session
 router.get('/verify', async (req, res) => {
     try {
-        console.log('🔍 Verifying session, userId:', req.session.userId);
-
         if (!req.session.userId) {
             return res.json({
                 success: false,
@@ -264,7 +197,6 @@ router.get('/verify', async (req, res) => {
 
         const user = await User.findById(req.session.userId).select('-__v');
         if (!user) {
-            console.log('⚠️ User not found, destroying session');
             req.session.destroy();
             return res.json({
                 success: false,
@@ -279,16 +211,14 @@ router.get('/verify', async (req, res) => {
             const portfolio = await Portfolio.findOne({ userId: user._id });
             if (portfolio) {
                 hasPortfolio = true;
-                portfolioId = portfolio._id.toString();
+                portfolioId = portfolio._id.toString(); // convert to string
             }
         }
-
-        console.log('✅ Session verified for:', user.email);
 
         res.json({
             success: true,
             user: {
-                _id: user._id.toString(),
+                _id: user._id.toString(), //convert to string
                 name: user.name,
                 email: user.email,
                 userType: user.userType,
@@ -301,8 +231,7 @@ router.get('/verify', async (req, res) => {
             }
         });
     } catch (error) {
-        console.error('❌ Verify error:', error);
-        console.error('Error stack:', error.stack);
+        console.error('Verify error:', error);
         res.status(500).json({
             success: false,
             message: 'Error verifying session',
@@ -313,17 +242,14 @@ router.get('/verify', async (req, res) => {
 
 // Log Out
 router.post('/logout', (req, res) => {
-    console.log('🚪 Logout request');
     req.session.destroy((err) => {
         if (err) {
-            console.error('❌ Logout error:', err);
             return res.status(500).json({
                 success: false,
                 message: 'Error logging out'
             });
         }
-        res.clearCookie('lentexhibit.sid');
-        console.log('✅ Logged out successfully');
+        res.clearCookie('connect.sid');
         res.json({
             success: true,
             message: 'Logout successful'
