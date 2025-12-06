@@ -249,7 +249,11 @@ router.post('/logout', (req, res) => {
                 message: 'Error logging out'
             });
         }
-        res.clearCookie('connect.sid');
+        res.clearCookie('lentexhibit.sid', {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
+        });
         res.json({
             success: true,
             message: 'Logout successful'
