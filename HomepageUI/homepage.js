@@ -1,5 +1,5 @@
 /**
- * Homepage UI script - UPDATED FOR PRODUCTION
+ * Homepage UI script - FIXED UI UPDATE
  * Contains functions to load works, handle authentication state,
  * manage UI interactions (search, filters, dropdowns).
  */
@@ -21,7 +21,7 @@ console.log('🏠 Hostname:', window.location.hostname);
 console.log('🎯 Environment:', window.location.hostname === 'localhost' ? 'Development' : 'Production');
 
 // ============================================
-// REST OF YOUR CODE (UNCHANGED)
+// GLOBAL VARIABLES
 // ============================================
 
 /** Currently authenticated user object (null when not authenticated). */
@@ -29,6 +29,10 @@ let currentUser = null;
 
 /** Currently selected category for filtering works. 'All' means no filter. */
 let currentCategory = 'All';
+
+// ============================================
+// PAGE INITIALIZATION
+// ============================================
 
 // Check authentication on page load
 window.onload = async function() {
@@ -39,6 +43,10 @@ window.onload = async function() {
     setupSearch();
 };
 
+// ============================================
+// AUTHENTICATION FUNCTIONS
+// ============================================
+
 async function checkAuth() {
     try {
         const response = await fetch(`${API_BASE_URL}/auth/verify`, {
@@ -48,7 +56,10 @@ async function checkAuth() {
         
         if (data.success) {
             currentUser = data.user;
+            console.log('✅ User authenticated:', currentUser.name);
             updateUIForLoggedInUser();
+        } else {
+            console.log('❌ Not authenticated');
         }
     } catch (error) {
         console.log('Not authenticated');
@@ -56,9 +67,27 @@ async function checkAuth() {
 }
 
 function updateUIForLoggedInUser() {
-    document.getElementById('authButtons').classList.add('hidden');
-    document.getElementById('userDropdown').classList.remove('hidden');
-    document.getElementById('userName').textContent = currentUser.name;
+    console.log('🔄 Updating UI for logged in user:', currentUser.name);
+    
+    // Hide auth buttons
+    const authButtons = document.getElementById('authButtons');
+    if (authButtons) {
+        authButtons.classList.add('hidden');
+    }
+    
+    // Show user dropdown
+    const userDropdown = document.getElementById('userDropdown');
+    if (userDropdown) {
+        userDropdown.classList.remove('hidden');
+    }
+    
+    // Set username
+    const userName = document.getElementById('userName');
+    if (userName) {
+        userName.textContent = currentUser.name;
+    }
+    
+    console.log('✅ UI updated successfully');
 }
 
 function toggleDropdown() {
@@ -68,11 +97,15 @@ function toggleDropdown() {
 window.onclick = function(event) {
     if (!event.target.matches('.user-button')) {
         const dropdown = document.getElementById('dropdownMenu');
-        if (dropdown.classList.contains('show')) {
+        if (dropdown && dropdown.classList.contains('show')) {
             dropdown.classList.remove('show');
         }
     }
 };
+
+// ============================================
+// MODAL FUNCTIONS
+// ============================================
 
 function showAuthModal() {
     document.getElementById('authModal').classList.add('show');
@@ -83,6 +116,16 @@ function closeAuthModal() {
     document.getElementById('step1Form').classList.remove('hidden');
     document.getElementById('step2Form').classList.add('hidden');
 }
+
+function backToStep1() {
+    document.getElementById('step2Form').classList.add('hidden');
+    document.getElementById('step1Form').classList.remove('hidden');
+    document.getElementById('modalTitle').textContent = 'Sign Up / Log In';
+}
+
+// ============================================
+// FORM HANDLERS
+// ============================================
 
 document.getElementById('step1Form').addEventListener('submit', async function(e) {
     e.preventDefault();
@@ -123,14 +166,14 @@ document.getElementById('step2Form').addEventListener('submit', async function(e
     await registerUser(userData);
 });
 
-function backToStep1() {
-    document.getElementById('step2Form').classList.add('hidden');
-    document.getElementById('step1Form').classList.remove('hidden');
-    document.getElementById('modalTitle').textContent = 'Sign Up / Log In';
-}
+// ============================================
+// REGISTRATION & LOGIN
+// ============================================
 
 async function registerUser(userData) {
     try {
+        console.log('📝 Registering user:', userData.email);
+        
         const response = await fetch(`${API_BASE_URL}/auth/signup`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -139,19 +182,38 @@ async function registerUser(userData) {
         });
 
         const data = await response.json();
+        console.log('📨 Registration response:', data);
 
         if (data.success) {
-            if (userData.userType === 'guest') {
-                alert('Welcome! You are now logged in as a guest.');
+            console.log('✅ Registration successful!');
+            
+            if (userData.userType === 'guest' || userData.userType === 'member') {
+                // Set currrent user immediately
+                currentUser = data.user;
+                console.log('👤 Current user set:', currentUser);
+
+                // Update UI immediately
+                updateUIForLoggedInUser();
+
+                // Close modal
                 closeAuthModal();
-                await checkAuth();
-                location.reload();
+
+                // Show welcome message
+                alert(`Welcome, ${data.user.name}! You are now logged in.`);
+                
+                // Reload to ensure everything is in sync
+                // Give the session more time to persist
+                setTimeout(() => {
+                    location.reload();
+                }, 1000);
             } else {
                 alert(data.message);
                 closeAuthModal();
             }
         } else {
-            if (data.message && data.message.includes('already registered')) {
+            console.log('❌ Registration failed:', data.message);
+            
+            if (data.message && data.message.includes('already')) {
                 if (confirm(data.message + '\n\nWould you like to log in instead?')) {
                     await loginUser(userData.email);
                 }
@@ -167,6 +229,8 @@ async function registerUser(userData) {
 
 async function loginUser(email) {
     try {
+        console.log('🔐 Logging in user:', email);
+        
         const response = await fetch(`${API_BASE_URL}/auth/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -175,13 +239,29 @@ async function loginUser(email) {
         });
 
         const data = await response.json();
+        console.log('📨 Login response:', data);
 
         if (data.success) {
+            console.log('✅ Login successful!');
+
+            // Set current user
             currentUser = data.user;
-            alert('Login successful!');
-            closeAuthModal();
+            console.log('👤 Current user set:', currentUser);
+
+            // Update UI immediately
             updateUIForLoggedInUser();
-            location.reload();
+
+            // Close modal
+            closeAuthModal();
+
+            // Show welcome message
+            alert('Login successful!');
+            
+            // Reload to ensure everything is in sync
+            // Give the session more time to persist
+            setTimeout(() => {
+                location.reload();
+            }, 1000);
         } else {
             alert(data.message || 'Login failed');
         }
@@ -211,12 +291,18 @@ async function logout() {
     }
 }
 
+// ============================================
+// DATA LOADING FUNCTIONS
+// ============================================
+
 async function loadFeaturedWorks() {
     try {
         const response = await fetch(`${API_BASE_URL}/works?featured=true&limit=3`);
         const data = await response.json();
 
         const grid = document.getElementById('featuredGrid');
+        if (!grid) return; // Element doesn't exist on this page
+        
         if (data.works && data.works.length > 0) {
             grid.innerHTML = data.works.map(work => createWorkCard(work)).join('');
         } else {
@@ -234,6 +320,8 @@ async function loadWorks() {
         const data = await response.json();
 
         const grid = document.getElementById('worksGrid');
+        if (!grid) return; // Element doesn't exist on this page
+        
         if (data.works && data.works.length > 0) {
             grid.innerHTML = data.works.map(work => createWorkCard(work)).join('');
         } else {
@@ -280,6 +368,8 @@ async function loadRankings(category) {
         const data = await response.json();
 
         const list = document.getElementById('rankingList');
+        if (!list) return; // Element doesn't exist on this page
+        
         if (data.works && data.works.length > 0) {
             list.innerHTML = data.works.slice(0, 10).map((work, index) => {
                 const icon = work.category === 'Photos' ? '📷' : work.category === 'Graphics' ? '🎨' : '🎬';
@@ -303,6 +393,10 @@ async function loadRankings(category) {
         console.error('Error loading rankings:', error);
     }
 }
+
+// ============================================
+// NAVIGATION FUNCTIONS
+// ============================================
 
 function viewWork(workId) {
     alert(`View work: ${workId}\n\nThis would open the work detail page.`);
@@ -364,8 +458,14 @@ function loadHomepage() {
     location.reload();
 }
 
+// ============================================
+// SEARCH FUNCTIONALITY
+// ============================================
+
 function setupSearch() {
     const searchBar = document.getElementById('searchBar');
+    if (!searchBar) return; // Element doesn't exist on this page
+    
     let searchTimeout;
 
     searchBar.addEventListener('input', function() {
@@ -387,6 +487,8 @@ async function searchWorks(query) {
         const data = await response.json();
 
         const grid = document.getElementById('worksGrid');
+        if (!grid) return;
+        
         if (data.works && data.works.length > 0) {
             grid.innerHTML = data.works.map(work => createWorkCard(work)).join('');
         } else {

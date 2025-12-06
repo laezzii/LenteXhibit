@@ -57,14 +57,14 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Session configuration - Production Ready
 const sessionConfig = {
-    secret: process.env.SESSION_SECRET || 'your-super-secret-session-key-change-this-in-production',
+    secret: process.env.SESSION_SECRET || 'LNZPf6DIUbSyVKQd5vqylXEtCmDZOZDO',
     resave: false,
     saveUninitialized: false,
     store: MongoStore.create({
         mongoUrl: process.env.MONGODB_URI || 'mongodb+srv://lentexhibit_db:lentexhibit_pass@lentexhibit.da4auec.mongodb.net/lentexhibit',
         touchAfter: 24 * 3600, // lazy session update (24 hours)
         crypto: {
-            secret: process.env.SESSION_SECRET || 'your-super-secret-session-key-change-this-in-production'
+            secret: process.env.SESSION_SECRET || 'LNZPf6DIUbSyVKQd5vqylXEtCmDZOZDO'
         }
     }),
     cookie: {
@@ -72,12 +72,13 @@ const sessionConfig = {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production', // HTTPS only in production
         sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-        domain: process.env.NODE_ENV === 'production' ? undefined : 'localhost'
+        domain: undefined
     },
-    name: 'lentexhibit.sid' // Custom session cookie name
+    name: 'lentexhibit.sid', // Custom session cookie name
+    rolling: true // Reset cookie expiration on each response
 };
 
-// Trust proxy if behind a reverse proxy (required for Render, Heroku, etc.)
+// Trust proxy if behind a reverse proxy (required for Render)
 if (process.env.NODE_ENV === 'production') {
     app.set('trust proxy', 1);
 }
@@ -210,6 +211,7 @@ const server = app.listen(PORT, () => {
     console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
     console.log(`📡 Frontend URL: ${process.env.FRONTEND_URL || 'Not configured'}`);
     console.log(`🔗 Local: http://localhost:${PORT}`);
+    console.log(`🍪 Session config: rolling=${sessionConfig.rolling}, maxAge=${sessionConfig.cookie.maxAge}ms`);
 });
 
 // Graceful shutdown

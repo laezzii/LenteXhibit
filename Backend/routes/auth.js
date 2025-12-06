@@ -93,6 +93,19 @@ router.post('/signup', async (req, res) => {
             req.session.userId = newUser._id;
             req.session.userType = newUser.userType;
 
+            // Save session
+            await new Promise((resolve, reject) => {
+                req.session.save((err) => {
+                    if (err) {
+                        console.error('❌ Session save error:', err);
+                        reject(err);
+                    } else {
+                        console.log('✅ Session saved for user:', newUser._id);
+                        resolve();
+                    }
+                });
+            });
+
             return res.json({
                 success: true,
                 message: `${userType.charAt(0).toUpperCase() + userType.slice(1)} account created and logged in`,
@@ -160,6 +173,19 @@ router.post('/login', async (req, res) => {
         // Create session
         req.session.userId = user._id;
         req.session.userType = user.userType;
+
+        // Save session
+        await new Promise((resolve, reject) => {
+                req.session.save((err) => {
+                    if (err) {
+                        console.error('❌ Session save error:', err);
+                        reject(err);
+                    } else {
+                        console.log('✅ Session saved for user:', newUser._id);
+                        resolve();
+                    }
+                });
+            });
 
         res.json({
             success: true,
@@ -249,7 +275,7 @@ router.post('/logout', (req, res) => {
                 message: 'Error logging out'
             });
         }
-        res.clearCookie('connect.sid');
+        res.clearCookie('lentexhibit.sid');
         res.json({
             success: true,
             message: 'Logout successful'
