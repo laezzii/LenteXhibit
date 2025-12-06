@@ -1,5 +1,5 @@
 /**
- * Authentication Routes
+ * Authentication Routes - FIXED
  * Handles signup, login, logout, and session verification.
  */
 
@@ -39,7 +39,7 @@ const isAdmin = async (req, res, next) => {
     }
 };
 
-// Sign up
+// Sign up - FIXED with explicit session save
 router.post('/signup', async (req, res) => {
     try {
         const {name, email, userType, batchName, cluster, position} = req.body;
@@ -93,7 +93,7 @@ router.post('/signup', async (req, res) => {
             req.session.userId = newUser._id;
             req.session.userType = newUser.userType;
 
-            // Save session
+            // FIXED: Save session explicitly before responding
             await new Promise((resolve, reject) => {
                 req.session.save((err) => {
                     if (err) {
@@ -141,7 +141,7 @@ router.post('/signup', async (req, res) => {
     }
 });
 
-// Log In
+// Log In - FIXED with explicit session save
 router.post('/login', async (req, res) => {
     try {
         const {email} = req.body;
@@ -174,23 +174,22 @@ router.post('/login', async (req, res) => {
         req.session.userId = user._id;
         req.session.userType = user.userType;
 
-        // Save session
+        // FIXED: Save session explicitly before responding
         await new Promise((resolve, reject) => {
-                req.session.save((err) => {
-                    if (err) {
-                        console.error('❌ Session save error:', err);
-                        reject(err);
-                    } else {
-                        console.log('✅ Session saved for user:', newUser._id);
-                        resolve();
-                    }
-                });
+            req.session.save((err) => {
+                if (err) {
+                    console.error('❌ Session save error:', err);
+                    reject(err);
+                } else {
+                    console.log('✅ Session saved for user:', user._id);
+                    resolve();
+                }
             });
+        });
 
         res.json({
             success: true,
             message: 'Login successful',
-
             user: {
                 _id: user._id,
                 name: user.name,
@@ -275,7 +274,7 @@ router.post('/logout', (req, res) => {
                 message: 'Error logging out'
             });
         }
-        res.clearCookie('lentexhibit.sid');
+        res.clearCookie('lentexhibit.sid'); // Use the custom session cookie name
         res.json({
             success: true,
             message: 'Logout successful'
