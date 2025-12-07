@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LenteXhibit Sample Data</title>
+    <link rel="stylesheet" href="homepage-styles.css">
+    <style>
+        /* Small helpers for badges and layout unique to this sample page */
+        .pill { display: inline-block; padding: 6px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+        .pill.status { background: #eef2ff; color: #4c51bf; }
+        .pill.category { background: #e3f9f1; color: #0f9b69; }
+        .pill.votes { background: #fff2e5; color: #c05621; }
+        .section-note { color: #666; font-size: 14px; margin-bottom: 15px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; }
+    </style>
+</head>
+<body>
+    <header class="top-header">
+        <div class="navbar-brand" onclick="location.href='index.html'">LenteXhibit</div>
+        <div class="navbar-right">
+            <div class="pill status">Sample Showcase</div>
+        </div>
+    </header>
+
+    <nav class="navbar">
+        <div class="navbar-center">
+            <a class="nav-link" onclick="location.href='index.html'">Home</a>
+            <a class="nav-link" href="#themes">Themes</a>
+            <a class="nav-link" href="#rankings">Rankings</a>
+            <a class="nav-link" href="#portfolios">Portfolios</a>
+            <a class="nav-link" href="#works">Works</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <section id="themes" class="featured-works">
+            <div class="section-header">
+                <h2>🎨 Sample Themes</h2>
+                <span class="section-note">Static examples pulled from the seeding data.</span>
+            </div>
+            <div class="featured-grid" id="themesGrid"></div>
+        </section>
+
+        <section id="rankings" class="ranking-section">
+            <div class="section-header">
+                <h2>🏆 Sample Rankings</h2>
+                <span class="section-note">Ordered by votes for quick preview.</span>
+            </div>
+            <div class="ranking-list" id="rankingList"></div>
+        </section>
+
+        <section id="portfolios" class="featured-works">
+            <div class="section-header">
+                <h2>📂 Sample Portfolios</h2>
+                <span class="section-note">One portfolio per approved member.</span>
+            </div>
+            <div class="grid-3" id="portfolioGrid"></div>
+        </section>
+
+        <section id="works" class="featured-works">
+            <div class="section-header">
+                <h2>📸 Works by Category</h2>
+                <span class="section-note">Photos, Graphics, and Videos pulled from the sample works.</span>
+            </div>
+            <div class="featured-grid" id="worksGrid"></div>
+        </section>
+    </div>
+
+    <script>
+        // Sample data mirrors the backend seed for quick UI previews
+        const sampleThemes = [
+            { title: 'Yolanda Resilience', description: 'Capturing the spirit of resilience and recovery in Eastern Visayas after Super Typhoon Yolanda', category: 'Photos', startDate: '2024-11-01', endDate: '2024-11-30', status: 'Ended' },
+            { title: 'Digital Art Revolution', description: 'Showcasing innovative digital art and graphic design that pushes creative boundaries', category: 'Graphics', startDate: '2024-12-01', endDate: '2024-12-31', status: 'Active' },
+            { title: 'Stories in Motion', description: 'Short documentary and narrative videos that tell compelling stories from our community', category: 'Videos', startDate: '2025-01-01', endDate: '2025-01-31', status: 'Upcoming' }
+        ];
+
+        const sampleRankings = [
+            { title: 'Photography Work 1 by John Dela Cruz', author: 'John Dela Cruz', category: 'Photos', votes: 48 },
+            { title: 'Graphics Work 1 by Maria Santos', author: 'Maria Santos', category: 'Graphics', votes: 44 },
+            { title: 'Videography Work 1 by Jose Reyes', author: 'Jose Reyes', category: 'Videos', votes: 39 },
+            { title: 'Photography Work 2 by John Dela Cruz', author: 'John Dela Cruz', category: 'Photos', votes: 33 },
+            { title: 'Graphics Work 2 by Maria Santos', author: 'Maria Santos', category: 'Graphics', votes: 27 }
+        ];
+
+        const samplePortfolios = [
+            { name: 'John Dela Cruz', cluster: 'Photography', position: 'Photography Cluster Head', batch: 'Burger', socials: 'https://instagram.com/johndelacruz', totalVotes: 130, blurb: 'Photography enthusiast and cluster head of UP Lente. Member of Burger batch.' },
+            { name: 'Maria Santos', cluster: 'Graphics', position: 'Graphics Cluster Head', batch: 'Sushi', socials: 'https://instagram.com/mariasantos', totalVotes: 118, blurb: 'Graphics creative leading the cluster. Member of Sushi batch.' },
+            { name: 'Jose Reyes', cluster: 'Videography', position: 'Videography Cluster Head', batch: 'Mochi', socials: 'https://instagram.com/josereyes', totalVotes: 96, blurb: 'Videography storyteller and cluster head. Member of Mochi batch.' }
+        ];
+
+        const sampleWorks = [
+            { title: 'Photos Work 1 by John Dela Cruz', author: 'John Dela Cruz', category: 'Photos', votes: 23, featured: true },
+            { title: 'Photos Work 2 by John Dela Cruz', author: 'John Dela Cruz', category: 'Photos', votes: 17 },
+            { title: 'Photos Work 3 by John Dela Cruz', author: 'John Dela Cruz', category: 'Photos', votes: 11 },
+            { title: 'Graphics Work 1 by Maria Santos', author: 'Maria Santos', category: 'Graphics', votes: 21, featured: true },
+            { title: 'Graphics Work 2 by Maria Santos', author: 'Maria Santos', category: 'Graphics', votes: 15 },
+            { title: 'Graphics Work 3 by Maria Santos', author: 'Maria Santos', category: 'Graphics', votes: 9 },
+            { title: 'Videos Work 1 by Jose Reyes', author: 'Jose Reyes', category: 'Videos', votes: 19, featured: true },
+            { title: 'Videos Work 2 by Jose Reyes', author: 'Jose Reyes', category: 'Videos', votes: 14 },
+            { title: 'Videos Work 3 by Jose Reyes', author: 'Jose Reyes', category: 'Videos', votes: 8 }
+        ];
+
+        const categoryIcon = (category) => {
+            if (category === 'Photos') return '📷';
+            if (category === 'Graphics') return '🎨';
+            return '🎬';
+        };
+
+        const formatDate = (str) => new Date(str).toLocaleDateString();
+
+        const renderThemes = () => {
+            const grid = document.getElementById('themesGrid');
+            grid.innerHTML = sampleThemes.map(theme => `
+                <div class="work-card">
+                    <div class="work-image">🎭</div>
+                    <div class="work-info">
+                        <div class="work-title">${theme.title}</div>
+                        <div class="work-author">${theme.description}</div>
+                        <div class="work-stats">
+                            <span class="pill category">${theme.category}</span>
+                            <span class="pill status">${theme.status}</span>
+                        </div>
+                        <div class="work-stats" style="margin-top: 6px;">
+                            <span>Start: ${formatDate(theme.startDate)}</span>
+                            <span>End: ${formatDate(theme.endDate)}</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        };
+
+        const renderRankings = () => {
+            const list = document.getElementById('rankingList');
+            list.innerHTML = sampleRankings.map((item, idx) => `
+                <div class="ranking-item">
+                    <div class="rank-number">#${idx + 1}</div>
+                    <div class="rank-image">${categoryIcon(item.category)}</div>
+                    <div class="rank-info">
+                        <div class="work-title">${item.title}</div>
+                        <div class="work-author">by ${item.author}</div>
+                        <div class="work-stats">
+                            <span class="pill category">${item.category}</span>
+                            <span class="pill votes">${item.votes} votes</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        };
+
+        const renderPortfolios = () => {
+            const grid = document.getElementById('portfolioGrid');
+            grid.innerHTML = samplePortfolios.map(portfolio => `
+                <div class="work-card">
+                    <div class="work-image">${categoryIcon(portfolio.cluster)}</div>
+                    <div class="work-info">
+                        <div class="work-title">${portfolio.name}</div>
+                        <div class="work-author">${portfolio.position}</div>
+                        <div class="work-stats">
+                            <span class="pill category">${portfolio.cluster}</span>
+                            <span class="pill status">Batch ${portfolio.batch}</span>
+                        </div>
+                        <p style="font-size: 14px; color: #555; margin: 8px 0 6px 0;">${portfolio.blurb}</p>
+                        <div class="work-stats">
+                            <span class="pill votes">${portfolio.totalVotes} total votes</span>
+                            <a href="${portfolio.socials}" target="_blank" rel="noopener" style="color: #667eea; font-weight: 600; text-decoration: none;">Socials ↗</a>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        };
+
+        const renderWorks = () => {
+            const grid = document.getElementById('worksGrid');
+            grid.innerHTML = sampleWorks.map(work => `
+                <div class="work-card">
+                    <div class="work-image">
+                        ${categoryIcon(work.category)}
+                        ${work.featured ? '<div class="featured-badge">⭐ Featured</div>' : ''}
+                    </div>
+                    <div class="work-info">
+                        <div class="work-title">${work.title}</div>
+                        <div class="work-author">by ${work.author}</div>
+                        <div class="work-stats">
+                            <span class="pill category">${work.category}</span>
+                            <span class="pill votes">${work.votes} votes</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            renderThemes();
+            renderRankings();
+            renderPortfolios();
+            renderWorks();
+        });
+    </script>
+</body>
+</html>
