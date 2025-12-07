@@ -564,31 +564,20 @@ function loadHomepage() {
 }
 
 // ============================================
-// SEARCH FUNCTIONALITY
+// SEARCH FUNCTIONALITY - ENHANCED FOR ACCESSIBILITY
 // ============================================
 
 function setupSearch() {
-    const searchBar = document.getElementById('searchBar');
-    if (!searchBar) return;
-    
-    let searchTimeout;
-
-    searchBar.addEventListener('input', function() {
-        clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(() => {
-            const query = this.value.trim();
-            if (query) {
-                searchWorks(query);
-            } else {
-                loadWorks();
-            }
-        }, 500);
-    });
+    // Note: Search is now handled by the accessible search component in index.html
+    // This function remains for compatibility but the main logic is in the inline script
+    console.log('🔍 Search setup delegated to accessible search component');
 }
 
 async function searchWorks(query) {
     try {
-        const response = await fetch(`${API_BASE_URL}/works?search=${encodeURIComponent(query)}`, {
+        console.log('🔎 Searching for:', query);
+        
+        const response = await fetch(`${API_BASE_URL}/works?search=${encodeURIComponent(query)}&limit=50`, {
             credentials: 'include'
         });
         const data = await response.json();
@@ -598,10 +587,63 @@ async function searchWorks(query) {
         
         if (data.works && data.works.length > 0) {
             grid.innerHTML = data.works.map(work => createWorkCard(work)).join('');
+            console.log(`✅ Found ${data.works.length} results`);
         } else {
-            grid.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🔍</div><p>No results found for "${query}"</p></div>`;
+            grid.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-state-icon">🔍</div>
+                    <p>No results found for "${query}"</p>
+                    <p style="margin-top: 10px; font-size: 14px; color: #999;">Try different keywords or check your spelling</p>
+                </div>
+            `;
+            console.log('❌ No results found');
         }
     } catch (error) {
-        console.error('Error searching works:', error);
+        console.error('❌ Error searching works:', error);
+        const grid = document.getElementById('worksGrid');
+        if (grid) {
+            grid.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-state-icon">⚠️</div>
+                    <p>Error performing search</p>
+                    <p style="margin-top: 10px; font-size: 14px;">Please try again</p>
+                </div>
+            `;
+        }
+    }
+}
+
+// Search all content types (works, members, themes)
+async function searchAllContent(query) {
+    try {
+        console.log('🔎 Searching all content for:', query);
+        
+        // Search works, members, and themes in parallel
+        const [worksResponse, membersResponse, themesResponse] = await Promise.all([
+            fetch(`${API_BASE_URL}/works?search=${encodeURIComponent(query)}&limit=20`, {
+                credentials: 'include'
+            }),
+            fetch(`${API_BASE_URL}/users?search=${encodeURIComponent(query)}&userType=member&limit=10`, {
+                credentials: 'include'
+            }),
+            fetch(`${API_BASE_URL}/themes?search=${encodeURIComponent(query)}&limit=5`, {
+                credentials: 'include'
+            })
+        ]);
+
+        const [worksData, membersData, themesData] = await Promise.all([
+            worksResponse.json(),
+            membersResponse.json(),
+            themesResponse.json()
+        ]);
+
+        return {
+            works: worksData.works || [],
+            members: membersData.users || [],
+            themes: themesData.themes || []
+        };
+    } catch (error) {
+        console.error('❌ Error in searchAllContent:', error);
+        return { works: [], members: [], themes: [] };
     }
 }

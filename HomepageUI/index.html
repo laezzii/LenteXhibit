@@ -5,28 +5,285 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LenteXhibit - UP Lente Portfolio</title>
     <link rel="stylesheet" href="homepage-styles.css">
+    <style>
+        /* ============================================ */
+        /* ACCESSIBLE SEARCH BAR STYLES */
+        /* ============================================ */
+
+        .search-container {
+            position: relative;
+            flex: 1;
+            max-width: 400px;
+        }
+
+        .search-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+            background: white;
+            border: 2px solid transparent;
+            border-radius: 25px;
+            padding: 2px;
+            transition: all 0.3s ease;
+        }
+
+        .search-wrapper:focus-within {
+            border-color: white;
+            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.3);
+        }
+
+        .search-icon {
+            padding: 0 12px;
+            color: #667eea;
+            pointer-events: none;
+            font-size: 16px;
+        }
+
+        .search-bar {
+            flex: 1;
+            border: none;
+            outline: none;
+            padding: 8px 8px 8px 0;
+            font-size: 14px;
+            background: transparent;
+            color: #333;
+            width: 100%;
+        }
+
+        .search-bar::placeholder {
+            color: #999;
+        }
+
+        /* Clear button */
+        .clear-search-button {
+            background: none;
+            border: none;
+            padding: 4px 8px;
+            cursor: pointer;
+            color: #999;
+            font-size: 16px;
+            display: none;
+            transition: all 0.3s ease;
+            border-radius: 50%;
+            margin-right: 4px;
+        }
+
+        .clear-search-button:hover {
+            background: rgba(0, 0, 0, 0.1);
+            color: #333;
+        }
+
+        .clear-search-button:focus {
+            outline: 2px solid white;
+            outline-offset: 2px;
+        }
+
+        .clear-search-button.visible {
+            display: block;
+        }
+
+        /* Loading indicator */
+        .search-loading {
+            padding: 0 8px;
+            color: #667eea;
+            display: none;
+            margin-right: 4px;
+        }
+
+        .search-loading.active {
+            display: block;
+        }
+
+        .search-spinner {
+            border: 2px solid rgba(102, 126, 234, 0.3);
+            border-top: 2px solid #667eea;
+            border-radius: 50%;
+            width: 14px;
+            height: 14px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Search suggestions dropdown */
+        .search-suggestions {
+            position: absolute;
+            top: calc(100% + 8px);
+            left: 0;
+            right: 0;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+            max-height: 400px;
+            overflow-y: auto;
+            display: none;
+            z-index: 2000;
+        }
+
+        .search-suggestions.visible {
+            display: block;
+        }
+
+        .suggestion-item {
+            padding: 12px 16px;
+            cursor: pointer;
+            border-bottom: 1px solid #f0f0f0;
+            transition: background 0.2s ease;
+        }
+
+        .suggestion-item:last-child {
+            border-bottom: none;
+        }
+
+        .suggestion-item:hover,
+        .suggestion-item:focus {
+            background: #f5f5f5;
+            outline: none;
+        }
+
+        .suggestion-item[aria-selected="true"] {
+            background: #e8edff;
+        }
+
+        .suggestion-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 4px;
+            font-size: 14px;
+        }
+
+        .suggestion-meta {
+            font-size: 13px;
+            color: #666;
+        }
+
+        .suggestion-highlight {
+            background: #fff59d;
+            padding: 0 2px;
+        }
+
+        .suggestion-icon {
+            margin-right: 8px;
+        }
+
+        .no-results {
+            padding: 20px;
+            text-align: center;
+            color: #999;
+            font-size: 14px;
+        }
+
+        /* Screen reader only */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0,0,0,0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        /* Focus visible styles */
+        *:focus-visible {
+            outline: 3px solid #667eea;
+            outline-offset: 2px;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .search-container {
+                max-width: 100%;
+                order: 3;
+                width: 100%;
+                margin-top: 10px;
+            }
+
+            .navbar-right {
+                flex-wrap: wrap;
+            }
+        }
+    </style>
 </head>
 <body>
     <!-- Top Header Bar -->
-    <!-- LenteXhibit branding, search bar, and login/sign up buttons positioned at the top page-->
     <header class="top-header">
-        <!-- LenteXhibit Logo when clicked reloads homepage-->
         <div class="navbar-brand" onclick="loadHomepage()">LenteXhibit</div>
         <div class="navbar-right">
-            <!--Search Bar - Allows users to search for works or members-->
-            <input type="text" class="search-bar" id="searchBar" placeholder="Search works or members...">
+            <!-- ACCESSIBLE SEARCH BAR -->
+            <div class="search-container">
+                <div class="search-wrapper">
+                    <span class="search-icon" aria-hidden="true">🔍</span>
+                    
+                    <input 
+                        type="search"
+                        id="searchBar"
+                        class="search-bar"
+                        placeholder="Search works or members..."
+                        aria-label="Search works or members"
+                        aria-describedby="search-instructions"
+                        aria-controls="search-suggestions"
+                        aria-expanded="false"
+                        aria-autocomplete="list"
+                        autocomplete="off"
+                        role="combobox"
+                    >
+
+                    <div class="search-loading" id="searchLoading" aria-hidden="true">
+                        <div class="search-spinner"></div>
+                    </div>
+
+                    <button 
+                        type="button" 
+                        class="clear-search-button" 
+                        id="clearSearchButton"
+                        aria-label="Clear search"
+                        tabindex="-1"
+                    >
+                        ✕
+                    </button>
+                </div>
+
+                <!-- Search suggestions dropdown -->
+                <div 
+                    id="searchSuggestions" 
+                    class="search-suggestions"
+                    role="listbox"
+                    aria-label="Search suggestions"
+                >
+                    <!-- Populated dynamically -->
+                </div>
+
+                <!-- Screen reader only instructions -->
+                <div id="search-instructions" class="sr-only">
+                    Type to search. Use arrow keys to navigate suggestions. Press Enter to select.
+                </div>
+
+                <!-- Live region for screen reader announcements -->
+                <div 
+                    id="searchStatus" 
+                    class="sr-only" 
+                    role="status" 
+                    aria-live="polite" 
+                    aria-atomic="true"
+                ></div>
+            </div>
             
-            <!-- Authentication Buttons - Sign Up / Log In -->
+            <!-- Authentication Buttons -->
             <div id="authButtons">
                 <button class="auth-button" onclick="showAuthModal()">Sign Up / Log In</button>
             </div>
 
-            <!-- User Dropdown Menu - Visible when logged in -->
+            <!-- User Dropdown Menu -->
             <div id="userDropdown" class="user-dropdown hidden">
                 <button class="user-button" onclick="toggleDropdown()">
                     <span id="userName">User</span> ▼
                 </button>
-                <!--Dropdown menu with user actions-->
                 <div class="dropdown-menu" id="dropdownMenu">
                     <div class="dropdown-item" onclick="viewMyPortfolio()">My Portfolio</div>
                     <div class="dropdown-item" onclick="showSection('themes')">Themes</div>
@@ -38,7 +295,6 @@
     </header>
 
     <!-- Navigation Bar -->
-    <!-- Navigation links to different sections of the site -->
     <nav class="navbar">
         <div class="navbar-center">
             <a class="nav-link" onclick="showSection('about')">About</a>
@@ -52,10 +308,8 @@
     </nav>
 
     <!-- Main Content -->
-    <!-- Contains page content: featured works, category filters, works grid, and rankings-->
     <div class="container">
         <!-- Featured Works Section -->
-        <!-- Displays works that have been featured by the admin-->
         <section class="featured-works">
             <div class="section-header">
                 <h2>✨ Featured Works</h2>
@@ -80,11 +334,9 @@
         </section>
 
         <!-- Ranking Section -->
-        <!-- Displays top ranked works with a category filter -->
         <section class="ranking-section" style="margin-top: 40px;">
             <div class="section-header">
                 <h2>🏆 Top Ranked Works</h2>
-                <!-- Category filter for rankings -->
                 <select id="rankingCategory" onchange="loadRankings(this.value)" style="padding: 8px; border-radius: 5px; border: 2px solid #e0e0e0;">
                     <option value="All">All Categories</option>
                     <option value="Photos">Photos</option>
@@ -168,5 +420,250 @@
     </div>
 
     <script src="homepage.js"></script>
+    <script>
+        // ============================================
+        // ACCESSIBLE SEARCH BAR IMPLEMENTATION
+        // ============================================
+
+        (function() {
+            const searchInput = document.getElementById('searchBar');
+            const clearButton = document.getElementById('clearSearchButton');
+            const searchLoading = document.getElementById('searchLoading');
+            const searchSuggestions = document.getElementById('searchSuggestions');
+            const searchStatus = document.getElementById('searchStatus');
+
+            let searchTimeout = null;
+            let selectedSuggestionIndex = -1;
+            let suggestions = [];
+
+            // ============================================
+            // KEYBOARD SHORTCUTS
+            // ============================================
+
+            document.addEventListener('keydown', (e) => {
+                // Ctrl+K or / to focus search (only if not in input)
+                if ((e.ctrlKey && e.key === 'k') || 
+                    (e.key === '/' && !['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName))) {
+                    e.preventDefault();
+                    searchInput.focus();
+                }
+
+                // Escape to clear or close
+                if (e.key === 'Escape' && document.activeElement === searchInput) {
+                    if (searchInput.value) {
+                        clearSearch();
+                    } else {
+                        closeSuggestions();
+                        searchInput.blur();
+                    }
+                }
+            });
+
+            // ============================================
+            // SEARCH INPUT HANDLERS
+            // ============================================
+
+            searchInput.addEventListener('input', (e) => {
+                const query = e.target.value.trim();
+
+                // Show/hide clear button
+                clearButton.classList.toggle('visible', query.length > 0);
+
+                // Clear previous timeout
+                clearTimeout(searchTimeout);
+
+                if (query.length === 0) {
+                    closeSuggestions();
+                    // Call original search function from homepage.js
+                    if (typeof searchWorks === 'function') {
+                        searchWorks('');
+                    }
+                    return;
+                }
+
+                // Show loading indicator
+                searchLoading.classList.add('active');
+
+                // Debounce search
+                searchTimeout = setTimeout(async () => {
+                    searchLoading.classList.remove('active');
+                    
+                    // Perform search
+                    await performAccessibleSearch(query);
+                    
+                    // Show suggestions
+                    showSuggestions(query);
+                }, 300);
+            });
+
+            // Arrow key navigation
+            searchInput.addEventListener('keydown', (e) => {
+                if (!suggestions.length) return;
+
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    selectedSuggestionIndex = Math.min(selectedSuggestionIndex + 1, suggestions.length - 1);
+                    updateSuggestionsUI();
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    selectedSuggestionIndex = Math.max(selectedSuggestionIndex - 1, -1);
+                    updateSuggestionsUI();
+                } else if (e.key === 'Enter' && selectedSuggestionIndex >= 0) {
+                    e.preventDefault();
+                    selectSuggestion(suggestions[selectedSuggestionIndex]);
+                }
+            });
+
+            // Clear button
+            clearButton.addEventListener('click', clearSearch);
+
+            // Close suggestions when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!searchInput.contains(e.target) && !searchSuggestions.contains(e.target)) {
+                    closeSuggestions();
+                }
+            });
+
+            // ============================================
+            // SEARCH FUNCTIONS
+            // ============================================
+
+            async function performAccessibleSearch(query) {
+                try {
+                    // Call original search from homepage.js
+                    if (typeof searchWorks === 'function') {
+                        await searchWorks(query);
+                    }
+
+                    // Announce results
+                    const worksGrid = document.getElementById('worksGrid');
+                    if (worksGrid) {
+                        const resultCount = worksGrid.querySelectorAll('.work-card').length;
+                        announceToScreenReader(`Found ${resultCount} result${resultCount !== 1 ? 's' : ''}`);
+                    }
+                } catch (error) {
+                    console.error('Search error:', error);
+                    announceToScreenReader('Search failed. Please try again.');
+                }
+            }
+
+            async function showSuggestions(query) {
+                try {
+                    // Fetch suggestions from API
+                    const response = await fetch(`${API_BASE_URL}/works?search=${encodeURIComponent(query)}&limit=5`, {
+                        credentials: 'include'
+                    });
+                    const data = await response.json();
+
+                    suggestions = data.works || [];
+
+                    if (suggestions.length === 0) {
+                        searchSuggestions.innerHTML = '<div class="no-results">No suggestions found</div>';
+                        searchSuggestions.classList.add('visible');
+                        searchInput.setAttribute('aria-expanded', 'true');
+                        return;
+                    }
+
+                    // Build suggestions HTML
+                    const html = suggestions.map((item, index) => {
+                        const icon = item.category === 'Photos' ? '📷' : 
+                                    item.category === 'Graphics' ? '🎨' : '🎬';
+                        const highlightedTitle = highlightMatch(item.title, query);
+                        const author = item.userId?.name || 'Unknown';
+
+                        return `
+                            <div 
+                                class="suggestion-item" 
+                                role="option"
+                                data-index="${index}"
+                                data-id="${item._id}"
+                                aria-selected="false"
+                                tabindex="-1"
+                            >
+                                <div class="suggestion-title">
+                                    <span class="suggestion-icon">${icon}</span>
+                                    ${highlightedTitle}
+                                </div>
+                                <div class="suggestion-meta">${item.category} • by ${author}</div>
+                            </div>
+                        `;
+                    }).join('');
+
+                    searchSuggestions.innerHTML = html;
+                    searchSuggestions.classList.add('visible');
+                    searchInput.setAttribute('aria-expanded', 'true');
+
+                    selectedSuggestionIndex = -1;
+
+                    // Add click handlers
+                    document.querySelectorAll('.suggestion-item').forEach((item, index) => {
+                        item.addEventListener('click', () => selectSuggestion(suggestions[index]));
+                    });
+                } catch (error) {
+                    console.error('Error fetching suggestions:', error);
+                }
+            }
+
+            function updateSuggestionsUI() {
+                const items = document.querySelectorAll('.suggestion-item');
+                items.forEach((item, index) => {
+                    const isSelected = index === selectedSuggestionIndex;
+                    item.setAttribute('aria-selected', isSelected);
+                    if (isSelected) {
+                        item.scrollIntoView({ block: 'nearest' });
+                    }
+                });
+            }
+
+            function selectSuggestion(suggestion) {
+                searchInput.value = suggestion.title;
+                closeSuggestions();
+                performAccessibleSearch(suggestion.title);
+                announceToScreenReader(`Selected ${suggestion.title}`);
+            }
+
+            function closeSuggestions() {
+                searchSuggestions.classList.remove('visible');
+                searchInput.setAttribute('aria-expanded', 'false');
+                selectedSuggestionIndex = -1;
+                suggestions = [];
+            }
+
+            function clearSearch() {
+                searchInput.value = '';
+                clearButton.classList.remove('visible');
+                closeSuggestions();
+                
+                // Call original search to show all works
+                if (typeof searchWorks === 'function') {
+                    searchWorks('');
+                } else if (typeof loadWorks === 'function') {
+                    loadWorks();
+                }
+                
+                searchInput.focus();
+                announceToScreenReader('Search cleared');
+            }
+
+            function highlightMatch(text, query) {
+                if (!query) return text;
+                const regex = new RegExp(`(${query})`, 'gi');
+                return text.replace(regex, '<span class="suggestion-highlight">$1</span>');
+            }
+
+            function announceToScreenReader(message) {
+                searchStatus.textContent = message;
+                setTimeout(() => {
+                    searchStatus.textContent = '';
+                }, 1000);
+            }
+
+            // Make clear function available globally if needed
+            window.clearSearch = clearSearch;
+
+            console.log('✅ Accessible search initialized');
+            console.log('🎹 Keyboard: Ctrl+K or / to focus, Esc to clear, ↑↓ to navigate');
+        })();
+    </script>
 </body>
 </html>
