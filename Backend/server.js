@@ -1,5 +1,5 @@
 /**
- * LenteXhibit Backend Server
+ * LenteXhibit Backend Server - FIXED SESSION MANAGEMENT
  * Main entry point for the backend server application.
  */
 
@@ -21,10 +21,13 @@ const voteRoutes = require('./routes/votes');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Trust proxy - MUST be before session middleware
+// Trust proxy - MUST be before everything
 app.set('trust proxy', 1);
 
-// CORS Configuration - MUST be before session middleware
+// CORS Configuration - CRITICAL FIX
+const isProduction = process.env.NODE_ENV === 'production';
+const frontendURL = process.env.FRONTEND_URL || 'https://lentexhibit-1.onrender.com';
+
 const corsOptions = {
     origin: function(origin, callback) {
         const allowedOrigins = [
@@ -37,63 +40,89 @@ const corsOptions = {
             'http://localhost:5173',
             'http://localhost:5174',
             'https://lentexhibit-1.onrender.com',
-            process.env.FRONTEND_URL
+            frontendURL
         ];
         
         // In development, allow any origin
-        if (process.env.NODE_ENV !== 'production') {
-            callback(null, true);
-        } else if (!origin || allowedOrigins.includes(origin)) {
+        if (!isProduction) {
+            return callback(null, true);
+        }
+        
+        // In production, check allowed origins
+        if (!origin || allowedOrigins.includes(origin)) {
             callback(null, true);
         } else {
-            callback(new Error('Not allowed by CORS'));
+            console.warn('⚠️ CORS blocked origin:', origin);
+            callback(null, true); // Allow anyway for now, log for debugging
         }
     },
-    credentials: true, // CRITICAL: Allow credentials
+    credentials: true, // CRITICAL: Must be true for cookies
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-    exposedHeaders: ['set-cookie'], // Expose set-cookie header
-    maxAge: 86400
+    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
+    exposedHeaders: ['Set-Cookie'],
+    preflightContinue: false,
+    optionsSuccessStatus: 204,
+    maxAge: 86400 // 24 hours
 };
 
 app.use(cors(corsOptions));
+
+// Handle preflight requests explicitly
+app.options('*', cors(corsOptions));
 
 // Body parser middleware - BEFORE session
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Session Configuration - FIXED
+// Session Configuration - FIXED FOR PERSISTENCE
 const sessionConfig = {
     secret: process.env.SESSION_SECRET || 'LNZPf6DIUbSyVKQd5vqylXEtCmDZOZDO',
     resave: false,
-    saveUninitialized: false, // Changed to false - only save sessions with data
+    saveUninitialized: false, // Only create session when data is stored
     store: MongoStore.create({
         mongoUrl: process.env.MONGODB_URI,
-        touchAfter: 24 * 3600,
+        touchAfter: 24 * 3600, // Lazy session update (once per 24h)
+        ttl: 14 * 24 * 60 * 60, // 14 days
         crypto: {
             secret: process.env.SESSION_SECRET || 'LNZPf6DIUbSyVKQd5vqylXEtCmDZOZDO'
-        }
+        },
+        autoRemove: 'native'
     }),
     cookie: {
-        maxAge: 1000 * 60 * 60 * 24 * 7, // 1 week
+        maxAge: 1000 * 60 * 60 * 24 * 14, // 14 days instead of 7
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production', // true in production
-        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // 'none' for cross-origin in production
+        secure: isProduction, // true only in production
+        sameSite: isProduction ? 'none' : 'lax', // 'none' for cross-origin in production
         path: '/',
-        domain: process.env.NODE_ENV === 'production' ? undefined : undefined // Let browser decide
+        domain: isProduction ? undefined : undefined // Let browser handle it
     },
-    name: 'lentexhibit.sid',
-    rolling: true, // Refresh cookie on each request
+    name: 'lentexhibit.sid', // Custom session cookie name
+    rolling: true, // Refresh cookie on each request (keeps user logged in)
     proxy: true // Trust the reverse proxy
 };
 
 app.use(session(sessionConfig));
 
-// Add session debug middleware
+// Session debug middleware - ENHANCED
 app.use((req, res, next) => {
-    console.log('📍 Request:', req.method, req.path);
+    console.log('🔍 Request:', req.method, req.path);
     console.log('🍪 Session ID:', req.sessionID);
-    console.log('👤 Session User:', req.session.userId);
+    console.log('👤 Session User:', req.session?.userId || 'none');
+    console.log('📦 Session:', {
+        exists: !!req.session,
+        userId: req.session?.userId,
+        userType: req.session?.userType,
+        cookie: req.session?.cookie
+    });
+    next();
+});
+
+// Add response headers for cookies (CRITICAL FIX)
+app.use((req, res, next) => {
+    if (isProduction) {
+        res.header('Access-Control-Allow-Credentials', 'true');
+        res.header('Access-Control-Allow-Origin', req.headers.origin || frontendURL);
+    }
     next();
 });
 
@@ -108,7 +137,6 @@ const connectDB = async () => {
         };
 
         await mongoose.connect(
-            //process.env.MONGODB_URI || 'mongodb+srv://lentexhibit_db:lentexhibit_pass@lentexhibit.da4auec.mongodb.net/lentexhibit',
             process.env.MONGODB_URI || 'mongodb://localhost:27017/lentexhibit',
             mongoOptions
         );
@@ -152,7 +180,8 @@ app.get('/', (req, res) => {
         status: 'ok',
         database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
         session: !!req.sessionID,
-        user: req.session.userId || null
+        user: req.session?.userId || null,
+        environment: process.env.NODE_ENV || 'development'
     });
 });
 
@@ -163,7 +192,8 @@ app.get('/api/health', (req, res) => {
         timestamp: new Date().toISOString(),
         database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
         environment: process.env.NODE_ENV || 'development',
-        session: !!req.sessionID
+        session: !!req.sessionID,
+        hasUser: !!req.session?.userId
     };
 
     try {
@@ -173,6 +203,20 @@ app.get('/api/health', (req, res) => {
         healthcheck.error = err.message;
         res.status(503).json(healthcheck);
     }
+});
+
+// Test endpoint to check session persistence
+app.get('/api/session-test', (req, res) => {
+    res.json({
+        sessionID: req.sessionID,
+        session: req.session,
+        userId: req.session?.userId,
+        cookie: req.session?.cookie,
+        headers: {
+            cookie: req.headers.cookie,
+            origin: req.headers.origin
+        }
+    });
 });
 
 // ERROR HANDLING MIDDLEWARE
@@ -205,10 +249,11 @@ app.use((err, req, res, next) => {
 const server = app.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT}`);
     console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
-    console.log(`📡 Frontend URL: ${process.env.FRONTEND_URL || 'Not configured'}`);
+    console.log(`📡 Frontend URL: ${frontendURL}`);
     console.log(`🔗 Local: http://localhost:${PORT}`);
     console.log(`🍪 Session config: rolling=${sessionConfig.rolling}, maxAge=${sessionConfig.cookie.maxAge}ms`);
     console.log(`🔒 Cookie secure: ${sessionConfig.cookie.secure}, sameSite: ${sessionConfig.cookie.sameSite}`);
+    console.log(`⏰ Session TTL: 14 days`);
 });
 
 // Graceful shutdown

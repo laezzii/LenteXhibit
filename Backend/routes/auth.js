@@ -1,5 +1,5 @@
 /**
- * Authentication Routes
+ * Authentication Routes - FIXED SESSION PERSISTENCE
  * Handles signup, login, logout, and session verification.
  */
 
@@ -9,7 +9,10 @@ const { User, Portfolio } = require('../models');
 
 // Middleware to check if user is authenticated
 const isAuthenticated = (req, res, next) => {
-    if (req.session.userId) {
+    console.log('🔐 Auth check - Session ID:', req.sessionID);
+    console.log('🔐 Auth check - User ID:', req.session?.userId);
+    
+    if (req.session && req.session.userId) {
         next();
     } else {
         res.status(401).json({
@@ -39,10 +42,12 @@ const isAdmin = async (req, res, next) => {
     }
 };
 
-// Sign up
+// Sign up - FIXED SESSION CREATION
 router.post('/signup', async (req, res) => {
     try {
         const {name, email, userType, batchName, cluster, position} = req.body;
+
+        console.log('📝 Signup request:', { name, email, userType });
 
         // Validate required fields
         if (!name || !email || !userType) {
@@ -57,7 +62,7 @@ router.post('/signup', async (req, res) => {
         if (existingUser) {
             return res.status(409).json({
                 success: false,
-                message: 'User with this email already exists'
+                message: 'User with this email already exists. Would you like to log in instead?'
             });
         }
 
@@ -70,7 +75,6 @@ router.post('/signup', async (req, res) => {
         }
 
         // Create new user
-        // Auto-approve members and guests for now (no admin approval required)
         const userData = {
             name,
             email,
@@ -88,16 +92,65 @@ router.post('/signup', async (req, res) => {
         const newUser = new User(userData);
         await newUser.save();
 
-        // Auto-login guests and members (no admin approval required)
-        if (userType === 'guest' || userType === 'member') {
-            req.session.userId = newUser._id;
-            req.session.userType = newUser.userType;
+        console.log('✅ User created:', newUser._id);
 
-            return res.json({
+        // Auto-login guests and members
+        if (userType === 'guest' || userType === 'member') {
+            // CRITICAL: Force session regeneration for security
+            req.session.regenerate((err) => {
+                if (err) {
+                    console.error('❌ Session regeneration error:', err);
+                    return res.status(500).json({
+                        success: false,
+                        message: 'Error creating session'
+                    });
+                }
+
+                // Set session data
+                req.session.userId = newUser._id.toString();
+                req.session.userType = newUser.userType;
+                req.session.userName = newUser.name;
+
+                // CRITICAL: Force save session before responding
+                req.session.save((err) => {
+                    if (err) {
+                        console.error('❌ Session save error:', err);
+                        return res.status(500).json({
+                            success: false,
+                            message: 'Error saving session'
+                        });
+                    }
+
+                    console.log('✅ Session created:', {
+                        sessionID: req.sessionID,
+                        userId: req.session.userId,
+                        userType: req.session.userType
+                    });
+
+                    res.json({
+                        success: true,
+                        message: `${userType.charAt(0).toUpperCase() + userType.slice(1)} account created and logged in`,
+                        user: {
+                            _id: newUser._id.toString(),
+                            name: newUser.name,
+                            email: newUser.email,
+                            userType: newUser.userType,
+                            isApproved: newUser.isApproved,
+                            cluster: newUser.cluster,
+                            batchName: newUser.batchName,
+                            position: newUser.position
+                        },
+                        sessionID: req.sessionID
+                    });
+                });
+            });
+        } else {
+            // For other types (shouldn't happen), return created info
+            res.json({
                 success: true,
-                message: `${userType.charAt(0).toUpperCase() + userType.slice(1)} account created and logged in`,
+                message: 'Account created',
                 user: {
-                    _id: newUser._id,
+                    _id: newUser._id.toString(),
                     name: newUser.name,
                     email: newUser.email,
                     userType: newUser.userType,
@@ -105,21 +158,8 @@ router.post('/signup', async (req, res) => {
                 }
             });
         }
-
-        // For any other types (e.g., admin), return created info
-        res.json({
-            success: true,
-            message: 'Account created',
-            user: {
-                _id: newUser._id,
-                name: newUser.name,
-                email: newUser.email,
-                userType: newUser.userType,
-                isApproved: newUser.isApproved
-            }
-        });
     } catch (error) {
-        console.error('Signup error:', error);
+        console.error('❌ Signup error:', error);
         res.status(500).json({
             success: false,
             message: 'Error during signup',
@@ -128,10 +168,12 @@ router.post('/signup', async (req, res) => {
     }
 });
 
-// Log In
+// Log In - FIXED SESSION CREATION
 router.post('/login', async (req, res) => {
     try {
         const {email} = req.body;
+
+        console.log('🔑 Login request for:', email);
 
         if (!email) {
             return res.status(400).json({
@@ -157,26 +199,57 @@ router.post('/login', async (req, res) => {
             });
         }
 
-        // Create session
-        req.session.userId = user._id;
-        req.session.userType = user.userType;
+        console.log('✅ User found:', user._id);
 
-        res.json({
-            success: true,
-            message: 'Login successful',
-
-            user: {
-                _id: user._id,
-                name: user.name,
-                email: user.email,
-                userType: user.userType,
-                cluster: user.cluster,
-                batchName: user.batchName,
-                position: user.position
+        // CRITICAL: Regenerate session for security
+        req.session.regenerate((err) => {
+            if (err) {
+                console.error('❌ Session regeneration error:', err);
+                return res.status(500).json({
+                    success: false,
+                    message: 'Error creating session'
+                });
             }
+
+            // Set session data
+            req.session.userId = user._id.toString();
+            req.session.userType = user.userType;
+            req.session.userName = user.name;
+
+            // CRITICAL: Force save session before responding
+            req.session.save((err) => {
+                if (err) {
+                    console.error('❌ Session save error:', err);
+                    return res.status(500).json({
+                        success: false,
+                        message: 'Error saving session'
+                    });
+                }
+
+                console.log('✅ Session created:', {
+                    sessionID: req.sessionID,
+                    userId: req.session.userId,
+                    userType: req.session.userType
+                });
+
+                res.json({
+                    success: true,
+                    message: 'Login successful',
+                    user: {
+                        _id: user._id.toString(),
+                        name: user.name,
+                        email: user.email,
+                        userType: user.userType,
+                        cluster: user.cluster,
+                        batchName: user.batchName,
+                        position: user.position
+                    },
+                    sessionID: req.sessionID
+                });
+            });
         });
     } catch (error) {
-        console.error('Login error:', error);
+        console.error('❌ Login error:', error);
         res.status(500).json({
             success: false,
             message: 'Error during login',
@@ -185,24 +258,37 @@ router.post('/login', async (req, res) => {
     }
 });
 
-// Verify Session
+// Verify Session - ENHANCED LOGGING
 router.get('/verify', async (req, res) => {
     try {
-        if (!req.session.userId) {
+        console.log('🔍 Verify request - Session ID:', req.sessionID);
+        console.log('🔍 Verify request - Session data:', req.session);
+        console.log('🔍 Verify request - Cookies:', req.headers.cookie);
+
+        if (!req.session || !req.session.userId) {
+            console.log('❌ No session or userId found');
             return res.json({
                 success: false,
-                message: 'Not authenticated'
+                message: 'Not authenticated',
+                debug: {
+                    hasSession: !!req.session,
+                    sessionID: req.sessionID,
+                    hasCookie: !!req.headers.cookie
+                }
             });
         }
 
         const user = await User.findById(req.session.userId).select('-__v');
         if (!user) {
+            console.log('❌ User not found in database');
             req.session.destroy();
             return res.json({
                 success: false,
                 message: 'User not found'
             });
         }
+
+        console.log('✅ User verified:', user._id);
 
         // Check if member has a portfolio
         let hasPortfolio = false;
@@ -211,14 +297,14 @@ router.get('/verify', async (req, res) => {
             const portfolio = await Portfolio.findOne({ userId: user._id });
             if (portfolio) {
                 hasPortfolio = true;
-                portfolioId = portfolio._id.toString(); // convert to string
+                portfolioId = portfolio._id.toString();
             }
         }
 
         res.json({
             success: true,
             user: {
-                _id: user._id.toString(), //convert to string
+                _id: user._id.toString(),
                 name: user.name,
                 email: user.email,
                 userType: user.userType,
@@ -228,10 +314,11 @@ router.get('/verify', async (req, res) => {
                 position: user.position,
                 hasPortfolio: hasPortfolio,
                 portfolioId: portfolioId
-            }
+            },
+            sessionID: req.sessionID
         });
     } catch (error) {
-        console.error('Verify error:', error);
+        console.error('❌ Verify error:', error);
         res.status(500).json({
             success: false,
             message: 'Error verifying session',
@@ -240,16 +327,29 @@ router.get('/verify', async (req, res) => {
     }
 });
 
-// Log Out
+// Log Out - PROPER SESSION CLEANUP
 router.post('/logout', (req, res) => {
+    console.log('👋 Logout request for session:', req.sessionID);
+
+    if (!req.session) {
+        return res.json({
+            success: true,
+            message: 'Already logged out'
+        });
+    }
+
     req.session.destroy((err) => {
         if (err) {
+            console.error('❌ Logout error:', err);
             return res.status(500).json({
                 success: false,
                 message: 'Error logging out'
             });
         }
-        res.clearCookie('connect.sid');
+        
+        res.clearCookie('lentexhibit.sid');
+        console.log('✅ Session destroyed and cookie cleared');
+        
         res.json({
             success: true,
             message: 'Logout successful'

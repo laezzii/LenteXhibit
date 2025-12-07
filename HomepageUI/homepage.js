@@ -1,6 +1,5 @@
-
 /**
- * Homepage UI script - FIXED UI UPDATE
+ * Homepage UI script - FIXED SESSION PERSISTENCE
  * Contains functions to load works, handle authentication state,
  * manage UI interactions (search, filters, dropdowns).
  */
@@ -38,6 +37,7 @@ let currentCategory = 'All';
 // Check authentication on page load
 window.onload = async function() {
     try {
+        console.log('🚀 Page loading...');
         await checkAuth();
         await loadCurrentTheme();
         await loadFeaturedWorks();
@@ -45,7 +45,7 @@ window.onload = async function() {
         await loadRankings('All');
         setupSearch();
     } catch (error) {
-        console.error('Error during page initialization:', error);
+        console.error('❌ Error during page initialization:', error);
     }
 };
 
@@ -55,23 +55,32 @@ window.onload = async function() {
 
 async function checkAuth() {
     try {
-        console.log('🔍 Checking authentication...');
+        console.log('🔐 Checking authentication...');
+        
+        // CRITICAL: Include credentials with every request
         const response = await fetch(`${API_BASE_URL}/auth/verify`, {
-            credentials: 'include'
+            method: 'GET',
+            credentials: 'include', // MUST include cookies
+            headers: {
+                'Content-Type': 'application/json'
+            }
         });
+        
         const data = await response.json();
         console.log('📋 Verify response:', data);
         
-        if (data.success) {
+        if (data.success && data.user) {
             currentUser = data.user;
             console.log('✅ User authenticated:', currentUser.name);
+            console.log('🍪 Session ID:', data.sessionID);
             updateUIForLoggedInUser();
         } else {
             console.log('❌ Not authenticated:', data.message);
+            console.log('🔍 Debug info:', data.debug);
             currentUser = null;
         }
     } catch (error) {
-        console.log('❌ Auth check error:', error);
+        console.error('❌ Auth check error:', error);
         currentUser = null;
     }
 }
@@ -177,43 +186,49 @@ document.getElementById('step2Form').addEventListener('submit', async function(e
 });
 
 // ============================================
-// REGISTRATION & LOGIN
+// REGISTRATION & LOGIN - FIXED FOR PERSISTENCE
 // ============================================
 
 async function registerUser(userData) {
     try {
         console.log('📝 Registering user:', userData.email);
         
+        // CRITICAL: Include credentials
         const response = await fetch(`${API_BASE_URL}/auth/signup`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
+            credentials: 'include', // MUST include for cookies
             body: JSON.stringify(userData)
         });
 
         const data = await response.json();
         console.log('📨 Registration response:', data);
+        console.log('🍪 Session ID:', data.sessionID);
 
         if (data.success) {
             console.log('✅ Registration successful!');
             
             if (userData.userType === 'guest' || userData.userType === 'member') {
-                // Close modal first
+                // Close modal
                 closeAuthModal();
+
+                // Update current user immediately
+                currentUser = data.user;
+                updateUIForLoggedInUser();
 
                 // Show welcome message
                 alert(`Welcome, ${data.user.name}! You are now logged in.`);
                 
-                // Reload page - checkAuth() will run on page load and verify session
+                // Reload to ensure fresh state
                 setTimeout(() => {
                     location.reload();
-                }, 500);
+                }, 1000);
             } else {
                 alert(data.message);
                 closeAuthModal();
             }
         } else {
-            console.log('❌ Registration failed:', data.message);
+            console.error('❌ Registration failed:', data.message);
             
             if (data.message && data.message.includes('already')) {
                 if (confirm(data.message + '\n\nWould you like to log in instead?')) {
@@ -224,24 +239,26 @@ async function registerUser(userData) {
             }
         }
     } catch (error) {
-        console.error('Registration error:', error);
+        console.error('❌ Registration error:', error);
         alert('Error during registration. Please try again.');
     }
 }
 
 async function loginUser(email) {
     try {
-        console.log('🔐 Logging in user:', email);
+        console.log('🔑 Logging in user:', email);
         
+        // CRITICAL: Include credentials
         const response = await fetch(`${API_BASE_URL}/auth/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
+            credentials: 'include', // MUST include for cookies
             body: JSON.stringify({ email })
         });
 
         const data = await response.json();
         console.log('📨 Login response:', data);
+        console.log('🍪 Session ID:', data.sessionID);
 
         if (data.success) {
             console.log('✅ Login successful!');
@@ -249,18 +266,22 @@ async function loginUser(email) {
             // Close modal
             closeAuthModal();
 
+            // Update current user immediately
+            currentUser = data.user;
+            updateUIForLoggedInUser();
+
             // Show welcome message
-            alert('Login successful!');
+            alert(`Welcome back, ${data.user.name}!`);
             
-            // Reload page - checkAuth() will run on page load and verify session
+            // Reload to ensure fresh state
             setTimeout(() => {
                 location.reload();
-            }, 500);
+            }, 1000);
         } else {
             alert(data.message || 'Login failed');
         }
     } catch (error) {
-        console.error('Login error:', error);
+        console.error('❌ Login error:', error);
         alert('Error during login. Please try again.');
     }
 }
@@ -269,18 +290,21 @@ async function logout() {
     if (!confirm('Are you sure you want to log out?')) return;
 
     try {
+        console.log('👋 Logging out...');
+        
         const response = await fetch(`${API_BASE_URL}/auth/logout`, {
             method: 'POST',
-            credentials: 'include'
+            credentials: 'include' // MUST include for cookies
         });
 
         const data = await response.json();
         if (data.success) {
             currentUser = null;
+            console.log('✅ Logged out successfully');
             location.reload();
         }
     } catch (error) {
-        console.error('Logout error:', error);
+        console.error('❌ Logout error:', error);
         alert('Error during logout. Please try again.');
     }
 }
@@ -297,7 +321,7 @@ async function loadCurrentTheme() {
         const data = await response.json();
 
         const themeCard = document.getElementById('currentThemeCard');
-        if (!themeCard) return; // Element doesn't exist on this page
+        if (!themeCard) return;
         
         if (data.success && data.theme) {
             const theme = data.theme;
@@ -338,7 +362,7 @@ async function loadFeaturedWorks() {
         const data = await response.json();
 
         const grid = document.getElementById('featuredGrid');
-        if (!grid) return; // Element doesn't exist on this page
+        if (!grid) return;
         
         if (data.works && data.works.length > 0) {
             grid.innerHTML = data.works.map(work => createWorkCard(work)).join('');
@@ -359,7 +383,7 @@ async function loadWorks() {
         const data = await response.json();
 
         const grid = document.getElementById('worksGrid');
-        if (!grid) return; // Element doesn't exist on this page
+        if (!grid) return;
         
         if (data.works && data.works.length > 0) {
             grid.innerHTML = data.works.map(work => createWorkCard(work)).join('');
@@ -414,7 +438,7 @@ async function loadRankings(category) {
         const data = await response.json();
 
         const list = document.getElementById('rankingList');
-        if (!list) return; // Element doesn't exist on this page
+        if (!list) return;
         
         if (data.works && data.works.length > 0) {
             list.innerHTML = data.works.slice(0, 10).map((work, index) => {
@@ -466,7 +490,6 @@ async function toggleVote(workId, event) {
 
         const data = await response.json();
         if (data.success) {
-            // Reload works to update vote count
             await loadWorks();
             alert('Thank you for your vote!');
         } else {
@@ -480,7 +503,6 @@ async function toggleVote(workId, event) {
 
 function viewWork(workId, event) {
     if (event) event.stopPropagation();
-    // Store the work ID in sessionStorage and navigate to a detail page if available
     sessionStorage.setItem('selectedWorkId', workId);
     alert(`View work details: ${workId}\n\nMore detailed view functionality coming soon.`);
 }
@@ -547,7 +569,7 @@ function loadHomepage() {
 
 function setupSearch() {
     const searchBar = document.getElementById('searchBar');
-    if (!searchBar) return; // Element doesn't exist on this page
+    if (!searchBar) return;
     
     let searchTimeout;
 
