@@ -741,6 +741,19 @@
             }
         }
 
+        const portfolioId = getPortfolioIdFromUrl();
+
+        window.onload = async function() {
+            // Validate portfolio ID before proceeding
+            if (!portfolioId) {
+                alert('Invalid portfolio ID. Redirecting to portfolios page...');
+                setTimeout(() => window.location.href = 'portfolio.html', 1500);
+                return;
+            }
+            await checkAuth();
+            await loadPortfolio();
+        }
+
         async function loadPortfolio() {
             console.log('🔄 Loading portfolio data for ID:', portfolioId);
 
