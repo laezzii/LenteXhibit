@@ -46,6 +46,35 @@ const sessionConfig = {
 
 app.use(session(sessionConfig));
 
+// CORS Configuration - Allow frontend to access backend
+const corsOptions = {
+    origin: function(origin, callback) {
+        const allowedOrigins = [
+            'http://localhost:3000',
+            'http://localhost:5173',
+            'http://localhost:5174',
+            'http://127.0.0.1:3000',
+            process.env.FRONTEND_URL
+        ];
+        
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    maxAge: 86400
+};
+
+app.use(cors(corsOptions));
+
+// Body parser middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
 // Trust proxy if behind a reverse proxy (required for Render)
 if (process.env.NODE_ENV === 'production') {
     app.set('trust proxy', 1);

@@ -506,7 +506,7 @@
         const PRODUCTION_API_URL = 'https://lentexhibit.onrender.com/api';
         const DEVELOPMENT_API = 'http://localhost:5000/api';
 
-        const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+        const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
             ? DEVELOPMENT_API
             : PRODUCTION_API_URL;
 
@@ -578,7 +578,9 @@
 
         async function loadVideos() {
             try {
-                const response = await fetch(`${API_BASE_URL}/works?category=Videos&limit=100`);
+                const response = await fetch(`${API_BASE_URL}/works?category=Videos&limit=100`, {
+                    credentials: 'include'
+                });
                 const data = await response.json();
 
                 if (data.success) {

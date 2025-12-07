@@ -10,8 +10,8 @@
 const PRODUCTION_API_URL = 'https://lentexhibit.onrender.com/api';
 const DEVELOPMENT_API = 'http://localhost:5000/api';
 
-const API_BASE_URL = window.location.hostname === 'localhost' || 
-                     window.location.hostname === '127.0.0.1'
+const API_BASE_URL = (window.location.hostname === 'localhost' || 
+                     window.location.hostname === '127.0.0.1')
     ? DEVELOPMENT_API
     : PRODUCTION_API_URL;
 
@@ -297,7 +297,9 @@ async function logout() {
 
 async function loadFeaturedWorks() {
     try {
-        const response = await fetch(`${API_BASE_URL}/works?featured=true&limit=3`);
+        const response = await fetch(`${API_BASE_URL}/works?featured=true&limit=3`, {
+            credentials: 'include'
+        });
         const data = await response.json();
 
         const grid = document.getElementById('featuredGrid');
@@ -316,7 +318,9 @@ async function loadFeaturedWorks() {
 async function loadWorks() {
     try {
         const categoryParam = currentCategory !== 'All' ? `&category=${currentCategory}` : '';
-        const response = await fetch(`${API_BASE_URL}/works?limit=12${categoryParam}`);
+        const response = await fetch(`${API_BASE_URL}/works?limit=12${categoryParam}`, {
+            credentials: 'include'
+        });
         const data = await response.json();
 
         const grid = document.getElementById('worksGrid');
@@ -364,7 +368,9 @@ function filterByCategory(category) {
 
 async function loadRankings(category) {
     try {
-        const response = await fetch(`${API_BASE_URL}/works/rankings/${category}`);
+        const response = await fetch(`${API_BASE_URL}/works/rankings/${category}`, {
+            credentials: 'include'
+        });
         const data = await response.json();
 
         const list = document.getElementById('rankingList');
@@ -483,7 +489,9 @@ function setupSearch() {
 
 async function searchWorks(query) {
     try {
-        const response = await fetch(`${API_BASE_URL}/works?search=${encodeURIComponent(query)}`);
+        const response = await fetch(`${API_BASE_URL}/works?search=${encodeURIComponent(query)}`, {
+            credentials: 'include'
+        });
         const data = await response.json();
 
         const grid = document.getElementById('worksGrid');
