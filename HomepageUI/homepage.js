@@ -1,3 +1,4 @@
+
 /**
  * Homepage UI script - FIXED UI UPDATE
  * Contains functions to load works, handle authentication state,
