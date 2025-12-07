@@ -37,11 +37,16 @@ let currentCategory = 'All';
 
 // Check authentication on page load
 window.onload = async function() {
-    await checkAuth();
-    loadFeaturedWorks();
-    loadWorks();
-    loadRankings('All');
-    setupSearch();
+    try {
+        await checkAuth();
+        await loadCurrentTheme();
+        await loadFeaturedWorks();
+        await loadWorks();
+        await loadRankings('All');
+        setupSearch();
+    } catch (error) {
+        console.error('Error during page initialization:', error);
+    }
 };
 
 // ============================================
@@ -284,6 +289,47 @@ async function logout() {
 // DATA LOADING FUNCTIONS
 // ============================================
 
+async function loadCurrentTheme() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/themes/active`, {
+            credentials: 'include'
+        });
+        const data = await response.json();
+
+        const themeCard = document.getElementById('currentThemeCard');
+        if (!themeCard) return; // Element doesn't exist on this page
+        
+        if (data.success && data.theme) {
+            const theme = data.theme;
+            const endDate = new Date(theme.endDate).toLocaleDateString();
+            themeCard.innerHTML = `
+                <div class="theme-card-content">
+                    <h3 class="titletheme">📌 ${theme.title}</h3>
+                    <p class="descriptiontheme"><strong>Description:</strong> ${theme.description}</p>
+                    <p class="categorytheme"><strong>Category:</strong> ${theme.category || 'All'}</p>
+                    <p class="datetheme"><strong>Voting Ends:</strong> ${endDate}</p>
+                    <div style="margin-top: 15px;">
+                        <button onclick="showSection('themes')" class="submit-btn">View All Themes</button>
+                    </div>
+                </div>
+            `;
+        } else {
+            themeCard.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-state-icon">🎭</div>
+                    <p>No active theme at the moment. Check back soon!</p>
+                </div>
+            `;
+        }
+    } catch (error) {
+        console.error('Error loading current theme:', error);
+        const themeCard = document.getElementById('currentThemeCard');
+        if (themeCard) {
+            themeCard.innerHTML = '<div class="empty-state"><div class="empty-state-icon">⚠️</div><p>Error loading theme</p></div>';
+        }
+    }
+}
+
 async function loadFeaturedWorks() {
     try {
         const response = await fetch(`${API_BASE_URL}/works?featured=true&limit=3`, {
@@ -327,16 +373,21 @@ async function loadWorks() {
 
 function createWorkCard(work) {
     const icon = work.category === 'Photos' ? '📷' : work.category === 'Graphics' ? '🎨' : '🎬';
+    const voteButton = currentUser ? `<button onclick="toggleVote('${work._id}', event)" class="vote-btn" id="vote-${work._id}">❤️ Vote</button>` : '';
     return `
-        <div class="work-card" onclick="viewWork('${work._id}')">
-            <div class="work-image">${icon}</div>
+        <div class="work-card">
+            <div class="work-image" onclick="viewWork('${work._id}', event)" style="cursor: pointer;">
+                ${icon}
+                ${work.featured ? '<div class="featured-badge">⭐ Featured</div>' : ''}
+            </div>
             <div class="work-info">
-                <div class="work-title">${work.title}</div>
+                <div class="work-title" onclick="viewWork('${work._id}', event)" style="cursor: pointer;">${work.title}</div>
                 <div class="work-author">by ${work.userId?.name || 'Unknown'}</div>
                 <div class="work-stats">
                     <span>❤️ ${work.voteCount || 0} votes</span>
                     <span>${work.category}</span>
                 </div>
+                ${voteButton}
             </div>
         </div>
     `;
@@ -370,7 +421,7 @@ async function loadRankings(category) {
                 const icon = work.category === 'Photos' ? '📷' : work.category === 'Graphics' ? '🎨' : '🎬';
                 const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '';
                 return `
-                    <div class="ranking-item" onclick="viewWork('${work._id}')">
+                    <div class="ranking-item" onclick="viewWork('${work._id}', event)" style="cursor: pointer;">
                         <div class="rank-number">${medal || (index + 1)}</div>
                         <div class="rank-image">${icon}</div>
                         <div class="rank-info">
@@ -386,6 +437,10 @@ async function loadRankings(category) {
         }
     } catch (error) {
         console.error('Error loading rankings:', error);
+        const list = document.getElementById('rankingList');
+        if (list) {
+            list.innerHTML = '<div class="empty-state"><div class="empty-state-icon">⚠️</div><p>Error loading rankings</p></div>';
+        }
     }
 }
 
@@ -393,8 +448,41 @@ async function loadRankings(category) {
 // NAVIGATION FUNCTIONS
 // ============================================
 
-function viewWork(workId) {
-    alert(`View work: ${workId}\n\nThis would open the work detail page.`);
+async function toggleVote(workId, event) {
+    event.stopPropagation();
+    
+    if (!currentUser) {
+        alert('Please log in to vote');
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/votes`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ workId })
+        });
+
+        const data = await response.json();
+        if (data.success) {
+            // Reload works to update vote count
+            await loadWorks();
+            alert('Thank you for your vote!');
+        } else {
+            alert(data.message || 'Vote failed');
+        }
+    } catch (error) {
+        console.error('Vote error:', error);
+        alert('Error recording vote. Please try again.');
+    }
+}
+
+function viewWork(workId, event) {
+    if (event) event.stopPropagation();
+    // Store the work ID in sessionStorage and navigate to a detail page if available
+    sessionStorage.setItem('selectedWorkId', workId);
+    alert(`View work details: ${workId}\n\nMore detailed view functionality coming soon.`);
 }
 
 async function viewMyPortfolio() {
