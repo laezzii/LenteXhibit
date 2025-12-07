@@ -53,6 +53,15 @@ const sampleUsers = [
         isApproved: true
     },
     {
+        name: 'Pending Member',
+        email: 'pending.member@up.edu.ph',
+        userType: 'member',
+        batchName: 'Tempura',
+        cluster: 'Graphics',
+        position: 'Graphics Member',
+        isApproved: false
+    },
+    {
         name: 'Guest User',
         email: 'guest@example.com',
         userType: 'guest',
@@ -201,10 +210,20 @@ async function seedDatabase() {
         console.log(`   Themes: ${createdThemes.length}`);
         console.log(`   Votes: ${votes.length}`);
         
-        console.log('\n🔑 Login Credentials:');
-        console.log('   Admin: admin@up.edu.ph');
-        console.log('   Member: john.delacruz@up.edu.ph');
-        console.log('   Guest: guest@example.com');
+        // Ready-to-use login credentials for all user states/roles
+        const credentials = [
+            { label: 'Admin', email: 'admin@up.edu.ph' },
+            { label: 'Member - Photography (approved)', email: 'john.delacruz@up.edu.ph' },
+            { label: 'Member - Graphics (approved)', email: 'maria.santos@up.edu.ph' },
+            { label: 'Member - Videography (approved)', email: 'jose.reyes@up.edu.ph' },
+            { label: 'Member - Graphics (pending approval)', email: 'pending.member@up.edu.ph' },
+            { label: 'Guest', email: 'guest@example.com' }
+        ];
+
+        console.log('\n🔑 Login Credentials (email-only login via POST /auth/login { email }):');
+        credentials.forEach((cred, index) => {
+            console.log(`   ${index + 1}. ${cred.label}: ${cred.email}`);
+        });
 
     } catch (error) {
         console.error('❌ Error seeding database:', error);
