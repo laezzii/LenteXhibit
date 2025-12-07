@@ -49,20 +49,24 @@ window.onload = async function() {
 
 async function checkAuth() {
     try {
+        console.log('🔍 Checking authentication...');
         const response = await fetch(`${API_BASE_URL}/auth/verify`, {
             credentials: 'include'
         });
         const data = await response.json();
+        console.log('📋 Verify response:', data);
         
         if (data.success) {
             currentUser = data.user;
             console.log('✅ User authenticated:', currentUser.name);
             updateUIForLoggedInUser();
         } else {
-            console.log('❌ Not authenticated');
+            console.log('❌ Not authenticated:', data.message);
+            currentUser = null;
         }
     } catch (error) {
-        console.log('Not authenticated');
+        console.log('❌ Auth check error:', error);
+        currentUser = null;
     }
 }
 
@@ -194,11 +198,10 @@ async function registerUser(userData) {
                 // Show welcome message
                 alert(`Welcome, ${data.user.name}! You are now logged in.`);
                 
-                // Verify session and refresh auth state
-                await checkAuth();
-                
-                // Reload page to refresh UI and data
-                location.reload();
+                // Reload page - checkAuth() will run on page load and verify session
+                setTimeout(() => {
+                    location.reload();
+                }, 500);
             } else {
                 alert(data.message);
                 closeAuthModal();
@@ -243,11 +246,10 @@ async function loginUser(email) {
             // Show welcome message
             alert('Login successful!');
             
-            // Verify session and refresh auth state
-            await checkAuth();
-            
-            // Reload page to refresh UI and data
-            location.reload();
+            // Reload page - checkAuth() will run on page load and verify session
+            setTimeout(() => {
+                location.reload();
+            }, 500);
         } else {
             alert(data.message || 'Login failed');
         }

@@ -37,7 +37,7 @@ const sessionConfig = {
         maxAge: 1000 * 60 * 60 * 24 * 7, // 1 week
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production', // HTTPS only in production
-        sameSite: 'lax',
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
         path: '/'
     },
     name: 'lentexhibit.sid', // Custom session cookie name

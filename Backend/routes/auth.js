@@ -92,6 +92,8 @@ router.post('/signup', async (req, res) => {
         if (userType === 'guest' || userType === 'member') {
             req.session.userId = newUser._id;
             req.session.userType = newUser.userType;
+            console.log('✅ Session set for user:', newUser._id);
+            console.log('📋 Session data:', req.session);
 
             return res.json({
                 success: true,
@@ -160,6 +162,8 @@ router.post('/login', async (req, res) => {
         // Create session
         req.session.userId = user._id;
         req.session.userType = user.userType;
+        console.log('✅ Session set for user:', user._id);
+        console.log('📋 Session data:', req.session);
 
         res.json({
             success: true,
@@ -187,7 +191,12 @@ router.post('/login', async (req, res) => {
 // Verify Session
 router.get('/verify', async (req, res) => {
     try {
+        console.log('🔍 Verify endpoint called');
+        console.log('📋 Session ID:', req.session.userId);
+        console.log('🍪 Session data:', req.session);
+        
         if (!req.session.userId) {
+            console.log('❌ No userId in session');
             return res.json({
                 success: false,
                 message: 'Not authenticated'
@@ -196,12 +205,15 @@ router.get('/verify', async (req, res) => {
 
         const user = await User.findById(req.session.userId).select('-__v');
         if (!user) {
+            console.log('❌ User not found in database');
             req.session.destroy();
             return res.json({
                 success: false,
                 message: 'User not found'
             });
         }
+
+        console.log('✅ User verified:', user.name);
 
         // Check if member has a portfolio
         let hasPortfolio = false;
