@@ -95,16 +95,27 @@ router.post('/signup', async (req, res) => {
             console.log('✅ Session set for user:', newUser._id);
             console.log('📋 Session data:', req.session);
 
-            return res.json({
-                success: true,
-                message: `${userType.charAt(0).toUpperCase() + userType.slice(1)} account created and logged in`,
-                user: {
-                    _id: newUser._id,
-                    name: newUser.name,
-                    email: newUser.email,
-                    userType: newUser.userType,
-                    isApproved: newUser.isApproved
+            // Save session explicitly to MongoDB
+            return req.session.save((err) => {
+                if (err) {
+                    console.error('❌ Session save error:', err);
+                    return res.status(500).json({
+                        success: false,
+                        message: 'Error saving session'
+                    });
                 }
+                console.log('💾 Session saved successfully');
+                res.json({
+                    success: true,
+                    message: `${userType.charAt(0).toUpperCase() + userType.slice(1)} account created and logged in`,
+                    user: {
+                        _id: newUser._id,
+                        name: newUser.name,
+                        email: newUser.email,
+                        userType: newUser.userType,
+                        isApproved: newUser.isApproved
+                    }
+                });
             });
         }
 
@@ -165,18 +176,29 @@ router.post('/login', async (req, res) => {
         console.log('✅ Session set for user:', user._id);
         console.log('📋 Session data:', req.session);
 
-        res.json({
-            success: true,
-            message: 'Login successful',
-            user: {
-                _id: user._id,
-                name: user.name,
-                email: user.email,
-                userType: user.userType,
-                cluster: user.cluster,
-                batchName: user.batchName,
-                position: user.position
+        // Save session explicitly to MongoDB
+        return req.session.save((err) => {
+            if (err) {
+                console.error('❌ Session save error:', err);
+                return res.status(500).json({
+                    success: false,
+                    message: 'Error saving session'
+                });
             }
+            console.log('💾 Session saved successfully');
+            res.json({
+                success: true,
+                message: 'Login successful',
+                user: {
+                    _id: user._id,
+                    name: user.name,
+                    email: user.email,
+                    userType: user.userType,
+                    cluster: user.cluster,
+                    batchName: user.batchName,
+                    position: user.position
+                }
+            });
         });
     } catch (error) {
         console.error('Login error:', error);
