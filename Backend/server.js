@@ -21,48 +21,13 @@ const voteRoutes = require('./routes/votes');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-
-// MIDDLEWARE CONFIGURATION
-// CORS Configuration - Production Ready
-const corsOptions = {
-    origin: function (origin, callback) {
-        // Allow requests with no origin (like mobile apps or curl requests)
-        if (!origin) return callback(null, true);
-        
-        const allowedOrigins = [
-            process.env.FRONTEND_URL,
-            'https://jocular-cactus-4f197c.netlify.app',
-            'http://localhost:3000',
-            'http://localhost:5500',
-            'http://127.0.0.1:5500'
-        ].filter(Boolean); // Remove undefined/null values
-
-        if (allowedOrigins.indexOf(origin) !== -1) {
-            callback(null, true);
-        } else {
-            console.warn(`🚫 CORS blocked origin: ${origin}`);
-            callback(new Error('Not allowed by CORS'));
-        }
-    },
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-    exposedHeaders: ['set-cookie']
-};
-
-app.use(cors(corsOptions));
-
-// Body parsing middleware
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-
-// Session configuration - Production Ready
+// Session Configuration
 const sessionConfig = {
     secret: process.env.SESSION_SECRET || 'LNZPf6DIUbSyVKQd5vqylXEtCmDZOZDO',
     resave: false,
     saveUninitialized: false,
     store: MongoStore.create({
-        mongoUrl: process.env.MONGODB_URI || 'mongodb+srv://lentexhibit_db:lentexhibit_pass@lentexhibit.da4auec.mongodb.net/lentexhibit',
+        mongoUrl: process.env.MONGODB_URI,
         touchAfter: 24 * 3600, // lazy session update (24 hours)
         crypto: {
             secret: process.env.SESSION_SECRET || 'LNZPf6DIUbSyVKQd5vqylXEtCmDZOZDO'
@@ -72,20 +37,19 @@ const sessionConfig = {
         maxAge: 1000 * 60 * 60 * 24 * 7, // 1 week
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production', // HTTPS only in production
-        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
-        //domain: undefined
+        sameSite: 'lax',
+        path: '/'
     },
     name: 'lentexhibit.sid', // Custom session cookie name
     rolling: true // Reset cookie expiration on each response
 };
 
+app.use(session(sessionConfig));
+
 // Trust proxy if behind a reverse proxy (required for Render)
 if (process.env.NODE_ENV === 'production') {
     app.set('trust proxy', 1);
 }
-
-app.use(session(sessionConfig));
-
 
 // DATABASE CONNECTION
 const connectDB = async () => {
@@ -139,20 +103,9 @@ app.use('/api/votes', voteRoutes);
 // Root endpoint
 app.get('/', (req, res) => {
     res.json({
-        success: true,
-        message: 'LenteXhibit API Server',
-        version: '1.0.0',
-        status: 'running',
-        environment: process.env.NODE_ENV || 'development',
-        endpoints: {
-            auth: '/api/auth',
-            users: '/api/users',
-            works: '/api/works',
-            portfolios: '/api/portfolios',
-            themes: '/api/themes',
-            votes: '/api/votes',
-            health: '/api/health'
-        }
+        status: 'ok',
+        database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
+        session: !!req.sessionID
     });
 });
 
