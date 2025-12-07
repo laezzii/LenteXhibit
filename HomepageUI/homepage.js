@@ -188,24 +188,17 @@ async function registerUser(userData) {
             console.log('✅ Registration successful!');
             
             if (userData.userType === 'guest' || userData.userType === 'member') {
-                // Set currrent user immediately
-                currentUser = data.user;
-                console.log('👤 Current user set:', currentUser);
-
-                // Update UI immediately
-                updateUIForLoggedInUser();
-
-                // Close modal
+                // Close modal first
                 closeAuthModal();
 
                 // Show welcome message
                 alert(`Welcome, ${data.user.name}! You are now logged in.`);
                 
-                // Reload to ensure everything is in sync
-                // Give the session more time to persist
-                setTimeout(() => {
-                    location.reload();
-                }, 1000);
+                // Verify session and refresh auth state
+                await checkAuth();
+                
+                // Reload page to refresh UI and data
+                location.reload();
             } else {
                 alert(data.message);
                 closeAuthModal();
@@ -244,24 +237,17 @@ async function loginUser(email) {
         if (data.success) {
             console.log('✅ Login successful!');
 
-            // Set current user
-            currentUser = data.user;
-            console.log('👤 Current user set:', currentUser);
-
-            // Update UI immediately
-            updateUIForLoggedInUser();
-
             // Close modal
             closeAuthModal();
 
             // Show welcome message
             alert('Login successful!');
             
-            // Reload to ensure everything is in sync
-            // Give the session more time to persist
-            setTimeout(() => {
-                location.reload();
-            }, 1000);
+            // Verify session and refresh auth state
+            await checkAuth();
+            
+            // Reload page to refresh UI and data
+            location.reload();
         } else {
             alert(data.message || 'Login failed');
         }

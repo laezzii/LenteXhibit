@@ -93,16 +93,28 @@ router.post('/signup', async (req, res) => {
             req.session.userId = newUser._id;
             req.session.userType = newUser.userType;
 
-            return res.json({
-                success: true,
-                message: `${userType.charAt(0).toUpperCase() + userType.slice(1)} account created and logged in`,
-                user: {
-                    _id: newUser._id,
-                    name: newUser.name,
-                    email: newUser.email,
-                    userType: newUser.userType,
-                    isApproved: newUser.isApproved
+            // Save session to ensure persistence
+            return req.session.save((err) => {
+                if (err) {
+                    console.error('Session save error:', err);
+                    return res.status(500).json({
+                        success: false,
+                        message: 'Error creating session',
+                        error: err.message
+                    });
                 }
+
+                res.json({
+                    success: true,
+                    message: `${userType.charAt(0).toUpperCase() + userType.slice(1)} account created and logged in`,
+                    user: {
+                        _id: newUser._id,
+                        name: newUser.name,
+                        email: newUser.email,
+                        userType: newUser.userType,
+                        isApproved: newUser.isApproved
+                    }
+                });
             });
         }
 
@@ -161,19 +173,30 @@ router.post('/login', async (req, res) => {
         req.session.userId = user._id;
         req.session.userType = user.userType;
 
-        res.json({
-            success: true,
-            message: 'Login successful',
-
-            user: {
-                _id: user._id,
-                name: user.name,
-                email: user.email,
-                userType: user.userType,
-                cluster: user.cluster,
-                batchName: user.batchName,
-                position: user.position
+        // Save session to ensure persistence
+        return req.session.save((err) => {
+            if (err) {
+                console.error('Session save error:', err);
+                return res.status(500).json({
+                    success: false,
+                    message: 'Error creating session',
+                    error: err.message
+                });
             }
+
+            res.json({
+                success: true,
+                message: 'Login successful',
+                user: {
+                    _id: user._id,
+                    name: user.name,
+                    email: user.email,
+                    userType: user.userType,
+                    cluster: user.cluster,
+                    batchName: user.batchName,
+                    position: user.position
+                }
+            });
         });
     } catch (error) {
         console.error('Login error:', error);
