@@ -240,29 +240,11 @@ body {
     justify-content: center;
     color: #999;
     font-size: 48px;
-    position: relative;
-}
-
-/* Featured badge on work card */
-.featured-badge {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    background: #ffd700;
-    color: #333;
-    padding: 5px 10px;
-    border-radius: 5px;
-    font-size: 12px;
-    font-weight: 600;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
 }
 
 /* Work information container */
 .work-info {
     padding: 15px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
 }
 
 /* Work title */
@@ -302,25 +284,6 @@ body {
 
 .vote-button.voted {
     color: #e74c3c;
-}
-
-/* Vote button in work info */
-.vote-btn {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    border: none;
-    padding: 8px 15px;
-    border-radius: 20px;
-    cursor: pointer;
-    font-weight: 600;
-    transition: all 0.3s;
-    width: 100%;
-    font-size: 14px;
-}
-
-.vote-btn:hover {
-    transform: scale(1.05);
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
 }
 
 /* Voting Theme Section */

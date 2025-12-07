@@ -1,5 +1,5 @@
 /**
- * LenteXhibit Backend Server - Production Ready
+ * LenteXhibit Backend Server - Fixed Session Configuration
  * Main entry point for the backend server application.
  */
 
@@ -21,32 +21,10 @@ const voteRoutes = require('./routes/votes');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Session Configuration
-const sessionConfig = {
-    secret: process.env.SESSION_SECRET || 'LNZPf6DIUbSyVKQd5vqylXEtCmDZOZDO',
-    resave: false,
-    saveUninitialized: true,
-    store: MongoStore.create({
-        mongoUrl: process.env.MONGODB_URI,
-        touchAfter: 24 * 3600, // lazy session update (24 hours)
-        crypto: {
-            secret: process.env.SESSION_SECRET || 'LNZPf6DIUbSyVKQd5vqylXEtCmDZOZDO'
-        }
-    }),
-    cookie: {
-        maxAge: 1000 * 60 * 60 * 24 * 7, // 1 week
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production', // HTTPS only in production
-        sameSite: process.env.NODE_ENV === 'production' ? 'strict' : false, // false allows cookies across different ports in dev
-        path: '/'
-    },
-    name: 'lentexhibit.sid', // Custom session cookie name
-    rolling: true // Reset cookie expiration on each response
-};
+// Trust proxy - MUST be before session middleware
+app.set('trust proxy', 1);
 
-app.use(session(sessionConfig));
-
-// CORS Configuration - Allow frontend to access backend
+// CORS Configuration - MUST be before session middleware
 const corsOptions = {
     origin: function(origin, callback) {
         const allowedOrigins = [
@@ -54,12 +32,16 @@ const corsOptions = {
             'http://127.0.0.1:5000',
             'http://127.0.0.1:5173',
             'http://127.0.0.1:5174',
+            'http://localhost:3000',
+            'http://localhost:5000',
+            'http://localhost:5173',
+            'http://localhost:5174',
             'https://lentexhibit-1.onrender.com',
             process.env.FRONTEND_URL
         ];
         
-        // In development, allow any origin; in production, be strict
-        if (process.env.NODE_ENV === 'development') {
+        // In development, allow any origin
+        if (process.env.NODE_ENV !== 'production') {
             callback(null, true);
         } else if (!origin || allowedOrigins.includes(origin)) {
             callback(null, true);
@@ -67,22 +49,53 @@ const corsOptions = {
             callback(new Error('Not allowed by CORS'));
         }
     },
-    credentials: true,
+    credentials: true, // CRITICAL: Allow credentials
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
+    exposedHeaders: ['set-cookie'], // Expose set-cookie header
     maxAge: 86400
 };
 
 app.use(cors(corsOptions));
 
-// Body parser middleware
+// Body parser middleware - BEFORE session
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Trust proxy if behind a reverse proxy (required for Render)
-if (process.env.NODE_ENV === 'production') {
-    app.set('trust proxy', 1);
-}
+// Session Configuration - FIXED
+const sessionConfig = {
+    secret: process.env.SESSION_SECRET || 'LNZPf6DIUbSyVKQd5vqylXEtCmDZOZDO',
+    resave: false,
+    saveUninitialized: false, // Changed to false - only save sessions with data
+    store: MongoStore.create({
+        mongoUrl: process.env.MONGODB_URI,
+        touchAfter: 24 * 3600,
+        crypto: {
+            secret: process.env.SESSION_SECRET || 'LNZPf6DIUbSyVKQd5vqylXEtCmDZOZDO'
+        }
+    }),
+    cookie: {
+        maxAge: 1000 * 60 * 60 * 24 * 7, // 1 week
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production', // true in production
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // 'none' for cross-origin in production
+        path: '/',
+        domain: process.env.NODE_ENV === 'production' ? undefined : undefined // Let browser decide
+    },
+    name: 'lentexhibit.sid',
+    rolling: true, // Refresh cookie on each request
+    proxy: true // Trust the reverse proxy
+};
+
+app.use(session(sessionConfig));
+
+// Add session debug middleware
+app.use((req, res, next) => {
+    console.log('📍 Request:', req.method, req.path);
+    console.log('🍪 Session ID:', req.sessionID);
+    console.log('👤 Session User:', req.session.userId);
+    next();
+});
 
 // DATABASE CONNECTION
 const connectDB = async () => {
@@ -101,11 +114,11 @@ const connectDB = async () => {
 
         console.log('✅ MongoDB connected successfully');
         console.log(`📦 Database: ${mongoose.connection.db.databaseName}`);
-        console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
+        console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
     } catch (err) {
         console.error('❌ MongoDB connection error:', err);
         console.error('💡 Check your MONGODB_URI in .env file');
-        process.exit(1); // Exit if cannot connect to database
+        process.exit(1);
     }
 };
 
@@ -133,23 +146,23 @@ app.use('/api/themes', themeRoutes);
 app.use('/api/votes', voteRoutes);
 
 // HEALTH CHECK & ROOT ENDPOINT
-// Root endpoint
 app.get('/', (req, res) => {
     res.json({
         status: 'ok',
         database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
-        session: !!req.sessionID
+        session: !!req.sessionID,
+        user: req.session.userId || null
     });
 });
 
-// Health check endpoint
 app.get('/api/health', (req, res) => {
     const healthcheck = {
         status: 'ok',
         uptime: process.uptime(),
         timestamp: new Date().toISOString(),
         database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
-        environment: process.env.NODE_ENV || 'development'
+        environment: process.env.NODE_ENV || 'development',
+        session: !!req.sessionID
     };
 
     try {
@@ -161,9 +174,7 @@ app.get('/api/health', (req, res) => {
     }
 });
 
-
 // ERROR HANDLING MIDDLEWARE
-// 404 Handler
 app.use((req, res) => {
     res.status(404).json({
         success: false,
@@ -173,17 +184,14 @@ app.use((req, res) => {
     });
 });
 
-// Global Error Handler
 app.use((err, req, res, next) => {
     console.error('❌ Error:', err);
 
-    // Don't leak error details in production
     const errorResponse = {
         success: false,
         message: err.message || 'Internal Server Error'
     };
 
-    // Include stack trace only in development
     if (process.env.NODE_ENV === 'development') {
         errorResponse.error = err;
         errorResponse.stack = err.stack;
@@ -195,10 +203,11 @@ app.use((err, req, res, next) => {
 // START SERVER
 const server = app.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT}`);
-    console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
     console.log(`📡 Frontend URL: ${process.env.FRONTEND_URL || 'Not configured'}`);
     console.log(`🔗 Local: http://localhost:${PORT}`);
     console.log(`🍪 Session config: rolling=${sessionConfig.rolling}, maxAge=${sessionConfig.cookie.maxAge}ms`);
+    console.log(`🔒 Cookie secure: ${sessionConfig.cookie.secure}, sameSite: ${sessionConfig.cookie.sameSite}`);
 });
 
 // Graceful shutdown
