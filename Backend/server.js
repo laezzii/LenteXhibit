@@ -37,7 +37,7 @@ const sessionConfig = {
         maxAge: 1000 * 60 * 60 * 24 * 7, // 1 week
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production', // HTTPS only in production
-        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+        sameSite: process.env.NODE_ENV === 'production' ? 'strict' : false, // false allows cookies across different ports in dev
         path: '/'
     },
     name: 'lentexhibit.sid', // Custom session cookie name
@@ -50,15 +50,18 @@ app.use(session(sessionConfig));
 const corsOptions = {
     origin: function(origin, callback) {
         const allowedOrigins = [
-            'http://localhost:3000',
-            'http://localhost:5173',
-            'http://localhost:5174',
             'http://127.0.0.1:3000',
+            'http://127.0.0.1:5000',
+            'http://127.0.0.1:5173',
+            'http://127.0.0.1:5174',
             'https://lentexhibit-1.onrender.com',
             process.env.FRONTEND_URL
         ];
         
-        if (!origin || allowedOrigins.includes(origin)) {
+        // In development, allow any origin; in production, be strict
+        if (process.env.NODE_ENV === 'development') {
+            callback(null, true);
+        } else if (!origin || allowedOrigins.includes(origin)) {
             callback(null, true);
         } else {
             callback(new Error('Not allowed by CORS'));
