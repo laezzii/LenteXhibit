@@ -25,7 +25,7 @@ const PORT = process.env.PORT || 5000;
 const sessionConfig = {
     secret: process.env.SESSION_SECRET || 'LNZPf6DIUbSyVKQd5vqylXEtCmDZOZDO',
     resave: false,
-    saveUninitialized: false,
+    saveUninitialized: true,
     store: MongoStore.create({
         mongoUrl: process.env.MONGODB_URI,
         touchAfter: 24 * 3600, // lazy session update (24 hours)
