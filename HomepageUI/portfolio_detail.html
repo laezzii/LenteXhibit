@@ -669,18 +669,19 @@
 
             console.log('🔍 URL Search Params:', window.location.search);
             console.log('🆔 Extracted Portfolio ID:', id);
-            console.log('ID type:', typeof id);
 
-            // Validate the ID
-            if (!id || id === 'undefined' || id === 'null' || id.trim() === '') {
-                console.error('❌ Invalid portfolio ID from URL');
+            // Validate the ID exists
+            if (!id || id === 'undefined' || id === 'null') {
+                console.error('No valid ID in URL');
                 return null;
             }
-            const cleanId = id.trim();
+
+            // Clean and validate
+            const cleanId = String(id).trim();
 
             // Validate MongoDB ObjectId format (24 hex characters)
             if (!/^[a-f\d]{24}$/i.test(cleanId)) {
-                console.error('❌ ID does not match MongoDB ObjectId format:', cleanId);
+                console.error('❌ Invalid MongoDB ObjectId format:', cleanId);
                 console.error('Expected: 24 hexadecimal characters');
                 console.error('Got:', cleanId, 'Length:', cleanId.length);
                 return null;
@@ -741,15 +742,27 @@
             }
         }
 
-        const portfolioId = getPortfolioIdFromUrl();
+        let portfolioId = null;
 
         window.onload = async function() {
+            console.log('Page loading...');
+            
+            // Extract portfolio ID AFTER page load (safer)
+            portfolioId = getPortfolioIdFromUrl();
+
+            console.log('Current portfolioId:', portfolioId);
+            
             // Validate portfolio ID before proceeding
             if (!portfolioId) {
+                console.error('❌ portfolioId is falsy after getPortfolioIdFromUrl()');
                 alert('Invalid portfolio ID. Redirecting to portfolios page...');
                 setTimeout(() => window.location.href = 'portfolio.html', 1500);
                 return;
             }
+            
+            console.log('✅ portfolioId validated:', portfolioId);
+
+            // Now load data
             await checkAuth();
             await loadPortfolio();
         }
@@ -765,11 +778,13 @@
             }
 
             try {
-                console.log('Fetching portfolio from:', `${API_BASE_URL}/portfolios/${portfolioId}`);
+                const url = `${API_BASE_URL}/portfolios/${portfolioId}`;
+                console.log('Fetching portfolio from:', url);
         
-                const response = await fetch(`${API_BASE_URL}/portfolios/${portfolioId}`, {
+                const response = await fetch(url, {
                     credentials: 'include'
                 });
+
                 console.log('Response status:', response.status);
 
                 if (!response.ok) {
@@ -787,10 +802,17 @@
                     loadWorks(portfolio.works || []);
 
                     // Show edit button if this is the user's own portfolio
-                    if (currentUser && portfolio.userId && currentUser._id === portfolio.userId._id) {
-                        console.log('User owns this portfolio - showing edit buttons');
-                        document.getElementById('editBtn').classList.remove('hidden');
-                        document.getElementById('addWorkBtn').classList.remove('hidden');
+                    if (currentUser && portfolio.userId) {
+                        const portfolioOwnerId = typeof portfolio.userId === 'string' 
+                            ? portfolio.userId 
+                            : portfolio.userId._id;
+                        const currentUserId = currentUser._id;
+                        
+                        if (portfolioOwnerId === currentUserId || portfolioOwnerId.toString() === currentUserId.toString()) {
+                            console.log('User owns this portfolio - showing edit buttons');
+                            document.getElementById('editBtn').classList.remove('hidden');
+                            document.getElementById('addWorkBtn').classList.remove('hidden');
+                        }
                     }
                 } else {
                     console.error('Portfolio not found in response', data);
@@ -799,12 +821,8 @@
                 }
             } catch (error) {
                 console.error('Error loading portfolio:', error);
-                console.error('Error details:', {
-                    message: error.message,
-                    stack: error.stack,
-                    portfolioId: portfolioId
-                });
                 alert('Error loading portfolio. Please try again later.');
+                setTimeout(() => window.location.href = 'portfolio.html', 2000);
             }
         }
 
@@ -846,14 +864,26 @@
             const grid = document.getElementById('worksGrid');
             
             if (works.length === 0) {
-                grid.innerHTML = `
+                let emptyMessage = `
                     <div class="empty-state">
                         <div class="empty-state-icon">📦</div>
                         <p>No works added yet</p>
-                        ${currentUser && portfolio && currentUser._id === portfolio.userId._id ? 
-                            '<p>Start building your portfolio by adding your first work!</p>' : ''}
-                    </div>
                 `;
+                
+                // Check if current user owns this portfolio
+                if (currentUser && portfolio && portfolio.userId) {
+                    const portfolioOwnerId = typeof portfolio.userId === 'string' 
+                        ? portfolio.userId 
+                        : portfolio.userId._id;
+                    const currentUserId = currentUser._id;
+                    
+                    if (portfolioOwnerId === currentUserId || portfolioOwnerId.toString() === currentUserId.toString()) {
+                        emptyMessage += '<p>Start building your portfolio by adding your first work!</p>';
+                    }
+                }
+                
+                emptyMessage += '</div>';
+                grid.innerHTML = emptyMessage;
                 return;
             }
 
@@ -997,21 +1027,17 @@
                 return;
             }
 
-            console.log('🔍 Fetching portfolio for user:', currentUser._id);
-
             try {
             const response = await fetch(`${API_BASE_URL}/portfolios/user/${currentUser._id}`, {
                 credentials: 'include'
             });
             const data = await response.json();
-        
-            console.log('📊 Portfolio fetch result:', data);
 
             if (data.success && data.portfolio) {
-                console.log('✅ Redirecting to portfolio:', data.portfolio._id);
-                window.location.href = `portfolio_detail.html?id=${data.portfolio._id}`;
+                const newPortfolioId = data.portfolio._id.toString();
+                console.log('✅ Redirecting to portfolio:', newPortfolioId);
+                window.location.href = `portfolio_detail.html?id=${newPortfolioId}`;
             } else {
-                console.log('📝 No portfolio found, offering to create one');
                 if (confirm('You do not have a portfolio yet. Would you like to create one now?')) {
                     window.location.href = 'portfolio.html';
                 }

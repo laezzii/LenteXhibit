@@ -646,7 +646,6 @@
             const data = await response.json();
 
             console.log('📂 Portfolios loaded:', data.count, 'portfolios');
-            console.log('📋 Full portfolio data:', JSON.stringify(data.portfolios, null, 2));
 
             const grid = document.getElementById('portfolioGrid');
             grid.innerHTML = '';
@@ -695,18 +694,27 @@
 
         // Try multiple ways to get the portfolio ID
         if (portfolio._id) {
-            portfolioId = portfolio._id.toString();
+            portfolioId = typeof portfolio._id === 'object'
+                ? portfolio._id.toString()
+                : portfolio._id;
         } else if (portfolio.id) {
-            portfolioId = portfolio.id.toString();
+            portfolioId = typeof portfolio.id === 'object'
+                ? portfolio.id.toString()
+                : portfolio.id;
         } else {
             console.error('Portfolio missing ID:', portfolio);
             return '';
         }
 
-        console.log('Creating card for portfolio ID:', portfolioId);
-        console.log('Full portfolio object:', JSON.stringify(portfolio, null, 2));
+        // Validate the ID format (24 hex characters for MongoDB ObjectId)
+        if (!/^[a-f\d]{24}$/i.test(portfolioId)) {
+            console.error('❌ Invalid ID format:', portfolioId);
+            return '';
+        }
 
-        // Safely access nester userId properties
+        console.log('Creating card with valid ID:', portfolioId);
+
+        // Safely access nested userId properties
         const userId = portfolio.userId || {};
         const userName = userId.name || 'Unknown';
         const userCluster = userId.cluster || 'Member';
@@ -715,7 +723,7 @@
                          userCluster === 'Graphics' ? '🎨' : '🎬';
         
         return `
-            <div class="portfolio-card" onclick="viewPortfolio('${portfolioId}')">
+            <div class="portfolio-card" data-portfolio-id="${portfolioId}" onclick="viewPortfolioFromCard(this)">
                 <div class="portfolio-header">
                     <div class="profile-photo">${userIcon}</div>
                     <div class="portfolio-name">${userName}</div>
@@ -734,8 +742,21 @@
                     </div>
                 </div>
             </div>
-        </div>
-    `;
+        `;
+    }
+
+    // Navigate to portfolio detail using data attribute (safer than inline string)
+    function viewPortfolioFromCard(element) {
+        const portfolioId = element.getAttribute('data-portfolio-id');
+        console.log('Clicked portfolio card, ID from data attribute:', portfolioId);
+
+        if (!portfolioId || portfolioId === 'null' || portfolioId === 'undefined') {
+            console.error('Invalid portfolio ID from card');
+            alert('Error: Invalid portfolio ID');
+            return;
+        }
+
+        viewPortfolio(portfolioId);
     }
 
     function filterByCluster(cluster) {
@@ -800,19 +821,11 @@
 
     // Navigate to ANY portfolio detail page (user's own OR other portfolios)
     function viewPortfolio(portfolioId) {
-        console.log('🔗 Navigating to portfolio:', portfolioId);
+        console.log('viewPortfolio called with:', portfolioId);
         console.log('🔍 ID type:', typeof portfolioId);
-        console.log('🔍 ID value:', JSON.stringify(portfolioId));
         
-        // Validate the portfolioId
-        if (!portfolioId || portfolioId === 'undefined' || portfolioId === 'null' || portfolioId.toString().trim() === '' || portfolioId === '[object Object]') {
-            console.error('❌ Invalid portfolio ID:', portfolioId);
-            alert('Invalid portfolio ID');
-            return;
-        }
-
-        // Clean and validate the ID
-        const cleanId = portfolioId.toString().trim();
+        // Convert to string and clean
+        const cleanId = String(portfolioId).trim();
 
         // Check if it looks like a valid MongoDB ObjectId (24 hex characters)
         if (!/^[a-f\d]{24}$/i.test(cleanId)) {
@@ -822,7 +835,6 @@
         }
         
         console.log('✅ Navigating to portfolio:', cleanId);
-        console.log('🌐 Full URL:', `portfolio_detail.html?id=${cleanId}`);
         
         window.location.href = `portfolio_detail.html?id=${cleanId}`;
     }
@@ -852,8 +864,9 @@
             console.log('📊 Portfolio fetch result:', data);
 
             if (data.success && data.portfolio) {
-                console.log('✅ Redirecting to portfolio:', data.portfolio._id);
-                window.location.href = `portfolio_detail.html?id=${data.portfolio._id}`;
+                const portfolioId = data.portfolio._id.toString();
+                console.log('✅ Redirecting to portfolio:', portfolioId);
+                window.location.href = `portfolio_detail.html?id=${portfolioId}`;
             } else {
                 console.log('📝 No portfolio found, offering to create one');
                 if (confirm('You do not have a portfolio yet. Would you like to create one now?')) {
@@ -914,6 +927,6 @@
             console.error('Error searching portfolios:', error);
         }
     }
-</script>
+    </script>
 </body>
 </html>

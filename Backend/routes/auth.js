@@ -92,30 +92,17 @@ router.post('/signup', async (req, res) => {
         if (userType === 'guest' || userType === 'member') {
             req.session.userId = newUser._id;
             req.session.userType = newUser.userType;
-            console.log('✅ Session set for user:', newUser._id);
-            console.log('📋 Session data:', req.session);
 
-            // Save session explicitly to MongoDB
-            return req.session.save((err) => {
-                if (err) {
-                    console.error('❌ Session save error:', err);
-                    return res.status(500).json({
-                        success: false,
-                        message: 'Error saving session'
-                    });
+            return res.json({
+                success: true,
+                message: `${userType.charAt(0).toUpperCase() + userType.slice(1)} account created and logged in`,
+                user: {
+                    _id: newUser._id,
+                    name: newUser.name,
+                    email: newUser.email,
+                    userType: newUser.userType,
+                    isApproved: newUser.isApproved
                 }
-                console.log('💾 Session saved successfully');
-                res.json({
-                    success: true,
-                    message: `${userType.charAt(0).toUpperCase() + userType.slice(1)} account created and logged in`,
-                    user: {
-                        _id: newUser._id,
-                        name: newUser.name,
-                        email: newUser.email,
-                        userType: newUser.userType,
-                        isApproved: newUser.isApproved
-                    }
-                });
             });
         }
 
@@ -173,32 +160,20 @@ router.post('/login', async (req, res) => {
         // Create session
         req.session.userId = user._id;
         req.session.userType = user.userType;
-        console.log('✅ Session set for user:', user._id);
-        console.log('📋 Session data:', req.session);
 
-        // Save session explicitly to MongoDB
-        return req.session.save((err) => {
-            if (err) {
-                console.error('❌ Session save error:', err);
-                return res.status(500).json({
-                    success: false,
-                    message: 'Error saving session'
-                });
+        res.json({
+            success: true,
+            message: 'Login successful',
+
+            user: {
+                _id: user._id,
+                name: user.name,
+                email: user.email,
+                userType: user.userType,
+                cluster: user.cluster,
+                batchName: user.batchName,
+                position: user.position
             }
-            console.log('💾 Session saved successfully');
-            res.json({
-                success: true,
-                message: 'Login successful',
-                user: {
-                    _id: user._id,
-                    name: user.name,
-                    email: user.email,
-                    userType: user.userType,
-                    cluster: user.cluster,
-                    batchName: user.batchName,
-                    position: user.position
-                }
-            });
         });
     } catch (error) {
         console.error('Login error:', error);
@@ -213,12 +188,7 @@ router.post('/login', async (req, res) => {
 // Verify Session
 router.get('/verify', async (req, res) => {
     try {
-        console.log('🔍 Verify endpoint called');
-        console.log('📋 Session ID:', req.session.userId);
-        console.log('🍪 Session data:', req.session);
-        
         if (!req.session.userId) {
-            console.log('❌ No userId in session');
             return res.json({
                 success: false,
                 message: 'Not authenticated'
@@ -227,15 +197,12 @@ router.get('/verify', async (req, res) => {
 
         const user = await User.findById(req.session.userId).select('-__v');
         if (!user) {
-            console.log('❌ User not found in database');
             req.session.destroy();
             return res.json({
                 success: false,
                 message: 'User not found'
             });
         }
-
-        console.log('✅ User verified:', user.name);
 
         // Check if member has a portfolio
         let hasPortfolio = false;
@@ -282,11 +249,7 @@ router.post('/logout', (req, res) => {
                 message: 'Error logging out'
             });
         }
-        res.clearCookie('lentexhibit.sid', {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
-        });
+        res.clearCookie('connect.sid');
         res.json({
             success: true,
             message: 'Logout successful'
