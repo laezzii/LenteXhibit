@@ -21,51 +21,36 @@ const voteRoutes = require('./routes/votes');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-app.set('trust proxy', 1); // Trust first proxy
 
 // MIDDLEWARE CONFIGURATION
 // CORS Configuration - Production Ready
 const corsOptions = {
     origin: function (origin, callback) {
+        // Allow requests with no origin (like mobile apps or curl requests)
+        if (!origin) return callback(null, true);
+        
         const allowedOrigins = [
             process.env.FRONTEND_URL,
             'https://jocular-cactus-4f197c.netlify.app',
+            'http://localhost:3000',
             'http://localhost:5500',
-            'http://127.0.0.1:5500',
-            'http://localhost:3000'
-        ].filter(Boolean);
+            'http://127.0.0.1:5500'
+        ].filter(Boolean); // Remove undefined/null values
 
-        console.log('🔍 CORS Request from:', origin);
-        console.log('✅ Allowed origins:', allowedOrigins);
-
-        // Allow requests with no origin (mobile apps, Postman)
-        if (!origin) {
-            console.log('✅ No origin - allowing request');
-            return callback(null, true);
-        }
-
-        if (allowedOrigins.includes(origin)) {
-            console.log('✅ Origin allowed:', origin);
+        if (allowedOrigins.indexOf(origin) !== -1) {
             callback(null, true);
         } else {
-            console.warn('🚫 Origin blocked:', origin);
-            // TEMPORARY: Allow anyway for debugging
-            callback(null, true);
-            // PRODUCTION: Use this instead
-            // callback(new Error('Not allowed by CORS'));
+            console.warn(`🚫 CORS blocked origin: ${origin}`);
+            callback(new Error('Not allowed by CORS'));
         }
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
-    exposedHeaders: ['Set-Cookie'],
-    optionsSuccessStatus: 200
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    exposedHeaders: ['set-cookie']
 };
 
 app.use(cors(corsOptions));
-
-// Handle preflight requests
-app.options('*', cors(corsOptions));
 
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
@@ -86,31 +71,20 @@ const sessionConfig = {
     cookie: {
         maxAge: 1000 * 60 * 60 * 24 * 7, // 1 week
         httpOnly: true,
-        secure: true,
-        sameSite: 'none',
-        path: '/'
+        secure: process.env.NODE_ENV === 'production', // HTTPS only in production
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
         //domain: undefined
     },
     name: 'lentexhibit.sid', // Custom session cookie name
-    rolling: true, // Reset cookie expiration on each response
-    proxy: true
+    rolling: true // Reset cookie expiration on each response
 };
 
-console.log('Session config:', {
-    secure: sessionConfig.cookie.secure,
-    sameSite: sessionConfig.cookie.sameSite,
-    proxy: sessionConfig.proxy
-});
+// Trust proxy if behind a reverse proxy (required for Render)
+if (process.env.NODE_ENV === 'production') {
+    app.set('trust proxy', 1);
+}
 
 app.use(session(sessionConfig));
-
-appuse((req, res, next) => {
-    console.log(`${req.method} ${req.path}`, {
-        origin: req.get('origin'),
-        hasSession: !!req.session.userId
-    });
-    next();
-})
 
 
 // DATABASE CONNECTION
