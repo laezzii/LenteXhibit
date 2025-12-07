@@ -1,5 +1,5 @@
 /**
- * Authentication Routes
+ * Authentication Routes - FIXED SESSION HANDLING
  * Handles signup, login, logout, and session verification.
  */
 
@@ -9,9 +9,15 @@ const { User, Portfolio } = require('../models');
 
 // Middleware to check if user is authenticated
 const isAuthenticated = (req, res, next) => {
-    if (req.session.userId) {
+    console.log('🔒 isAuthenticated check - Session:', req.session);
+    console.log('🔒 Session ID:', req.sessionID);
+    console.log('🔒 User ID in session:', req.session.userId);
+    
+    if (req.session && req.session.userId) {
+        console.log('✅ User is authenticated');
         next();
     } else {
+        console.log('❌ User not authenticated');
         res.status(401).json({
             success: false,
             message: 'Not authenticated'
@@ -44,6 +50,8 @@ router.post('/signup', async (req, res) => {
     try {
         const {name, email, userType, batchName, cluster, position} = req.body;
 
+        console.log('📝 Signup attempt:', { name, email, userType });
+
         // Validate required fields
         if (!name || !email || !userType) {
             return res.status(400).json({
@@ -70,7 +78,6 @@ router.post('/signup', async (req, res) => {
         }
 
         // Create new user
-        // Auto-approve members and guests for now (no admin approval required)
         const userData = {
             name,
             email,
@@ -88,12 +95,28 @@ router.post('/signup', async (req, res) => {
         const newUser = new User(userData);
         await newUser.save();
 
-        // Auto-login guests and members (no admin approval required)
+        console.log('✅ User created:', newUser._id);
+
+        // Auto-login guests and members
         if (userType === 'guest' || userType === 'member') {
-            req.session.userId = newUser._id;
+            // CRITICAL: Ensure session is saved before responding
+            req.session.userId = newUser._id.toString();
             req.session.userType = newUser.userType;
-            console.log('✅ Session set for user:', newUser._id);
-            console.log('📋 Session data:', req.session);
+            
+            // Force session save and wait for it
+            await new Promise((resolve, reject) => {
+                req.session.save((err) => {
+                    if (err) {
+                        console.error('❌ Session save error:', err);
+                        reject(err);
+                    } else {
+                        console.log('✅ Session saved successfully');
+                        console.log('📋 Session data after save:', req.session);
+                        console.log('🆔 Session ID:', req.sessionID);
+                        resolve();
+                    }
+                });
+            });
 
             return res.json({
                 success: true,
@@ -121,7 +144,7 @@ router.post('/signup', async (req, res) => {
             }
         });
     } catch (error) {
-        console.error('Signup error:', error);
+        console.error('❌ Signup error:', error);
         res.status(500).json({
             success: false,
             message: 'Error during signup',
@@ -134,6 +157,8 @@ router.post('/signup', async (req, res) => {
 router.post('/login', async (req, res) => {
     try {
         const {email} = req.body;
+
+        console.log('🔑 Login attempt:', email);
 
         if (!email) {
             return res.status(400).json({
@@ -151,6 +176,8 @@ router.post('/login', async (req, res) => {
             });
         }
 
+        console.log('👤 User found:', user._id);
+
         // Check if member is approved
         if (user.userType === 'member' && !user.isApproved) {
             return res.status(403).json({
@@ -159,11 +186,24 @@ router.post('/login', async (req, res) => {
             });
         }
 
-        // Create session
-        req.session.userId = user._id;
+        // CRITICAL: Set session and force save
+        req.session.userId = user._id.toString();
         req.session.userType = user.userType;
-        console.log('✅ Session set for user:', user._id);
-        console.log('📋 Session data:', req.session);
+        
+        // Force session save and wait for it
+        await new Promise((resolve, reject) => {
+            req.session.save((err) => {
+                if (err) {
+                    console.error('❌ Session save error:', err);
+                    reject(err);
+                } else {
+                    console.log('✅ Session saved successfully');
+                    console.log('📋 Session data after save:', req.session);
+                    console.log('🆔 Session ID:', req.sessionID);
+                    resolve();
+                }
+            });
+        });
 
         res.json({
             success: true,
@@ -179,7 +219,7 @@ router.post('/login', async (req, res) => {
             }
         });
     } catch (error) {
-        console.error('Login error:', error);
+        console.error('❌ Login error:', error);
         res.status(500).json({
             success: false,
             message: 'Error during login',
@@ -188,13 +228,25 @@ router.post('/login', async (req, res) => {
     }
 });
 
-// Verify Session
+// Verify Session - CRITICAL ENDPOINT
 router.get('/verify', async (req, res) => {
     try {
-        console.log('🔍 Verify endpoint called');
-        console.log('📋 Session ID:', req.session.userId);
-        console.log('🍪 Session data:', req.session);
+        console.log('🔍 ========== VERIFY ENDPOINT CALLED ==========');
+        console.log('🆔 Session ID:', req.sessionID);
+        console.log('📦 Full Session Object:', JSON.stringify(req.session, null, 2));
+        console.log('👤 User ID in session:', req.session.userId);
+        console.log('🍪 Cookies:', req.headers.cookie);
+        console.log('================================================');
         
+        // Check if session exists and has userId
+        if (!req.session) {
+            console.log('❌ No session object');
+            return res.json({
+                success: false,
+                message: 'No session found'
+            });
+        }
+
         if (!req.session.userId) {
             console.log('❌ No userId in session');
             return res.json({
@@ -203,9 +255,14 @@ router.get('/verify', async (req, res) => {
             });
         }
 
+        console.log('✅ Session exists with userId:', req.session.userId);
+
+        // Find user in database
         const user = await User.findById(req.session.userId).select('-__v');
+        
         if (!user) {
-            console.log('❌ User not found in database');
+            console.log('❌ User not found in database for ID:', req.session.userId);
+            // Destroy invalid session
             req.session.destroy();
             return res.json({
                 success: false,
@@ -213,7 +270,7 @@ router.get('/verify', async (req, res) => {
             });
         }
 
-        console.log('✅ User verified:', user.name);
+        console.log('✅ User verified:', user.name, '(', user.email, ')');
 
         // Check if member has a portfolio
         let hasPortfolio = false;
@@ -222,14 +279,17 @@ router.get('/verify', async (req, res) => {
             const portfolio = await Portfolio.findOne({ userId: user._id });
             if (portfolio) {
                 hasPortfolio = true;
-                portfolioId = portfolio._id.toString(); // convert to string
+                portfolioId = portfolio._id.toString();
             }
         }
+
+        // Touch session to keep it alive
+        req.session.touch();
 
         res.json({
             success: true,
             user: {
-                _id: user._id.toString(), //convert to string
+                _id: user._id.toString(),
                 name: user.name,
                 email: user.email,
                 userType: user.userType,
@@ -242,7 +302,8 @@ router.get('/verify', async (req, res) => {
             }
         });
     } catch (error) {
-        console.error('Verify error:', error);
+        console.error('❌ Verify error:', error);
+        console.error('Stack trace:', error.stack);
         res.status(500).json({
             success: false,
             message: 'Error verifying session',
@@ -253,18 +314,25 @@ router.get('/verify', async (req, res) => {
 
 // Log Out
 router.post('/logout', (req, res) => {
+    console.log('👋 Logout called for session:', req.sessionID);
+    
     req.session.destroy((err) => {
         if (err) {
+            console.error('❌ Logout error:', err);
             return res.status(500).json({
                 success: false,
                 message: 'Error logging out'
             });
         }
+        
+        console.log('✅ Session destroyed');
+        
         res.clearCookie('lentexhibit.sid', {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
         });
+        
         res.json({
             success: true,
             message: 'Logout successful'
