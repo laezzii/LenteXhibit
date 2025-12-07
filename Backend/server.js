@@ -73,6 +73,26 @@ app.get('/api/health', (req, res) => {
     });
 });
 
+// Database health endpoint for quick verification
+app.get('/api/health/db', (req, res) => {
+    const readyState = mongoose.connection.readyState; // 0=disconnected,1=connected,2=connecting,3=disconnecting
+    const stateMap = {
+        0: 'disconnected',
+        1: 'connected',
+        2: 'connecting',
+        3: 'disconnecting'
+    };
+
+    res.json({
+        status: stateMap[readyState] === 'connected' ? 'ok' : 'degraded',
+        readyState,
+        dbState: stateMap[readyState],
+        database: mongoose.connection.name || null,
+        hasConnections: mongoose.connection.hosts?.length > 0 || false,
+        timestamp: new Date().toISOString()
+    });
+});
+
 // Error handling middleware
 app.use((err, req, res, next) => {
     console.error('Error:', err);
